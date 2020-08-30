@@ -3,6 +3,8 @@
 #include <QApplication>
 #include <QDir>
 
+#include "oxfold_wrapper.h"
+
 void init_bft_env()
 {
     //create directories at home dir
@@ -24,9 +26,18 @@ void init_bft_env()
     {
         dir3.mkpath(QDir::homePath() + "/oxfold/bigfiletool/downloading");
     }
+    QDir dir4(QDir::homePath() + "/oxfold/bigfiletool/myrouter");
+    if (!dir3.exists())
+    {
+        dir3.mkpath(QDir::homePath() + "/oxfold/bigfiletool/myrouter");
+    }
+
+
 
     // and init locale DB
 
+    // start http server and http proxy
+    start_proxy();
 }
 
 int main(int argc, char *argv[])

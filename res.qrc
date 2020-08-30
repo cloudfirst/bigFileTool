@@ -1,7 +1,6 @@
 <RCC>
     <qresource prefix="/img"/>
     <qresource prefix="/">
-        <file>imgs/oxfold-logo.PNG</file>
         <file>imgs/shared_files.png</file>
         <file>imgs/downloaded.png</file>
         <file>imgs/downloading.png</file>

@@ -19,15 +19,17 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     main.cpp \
     mainwindow.cpp \
-    my_shared_files_table.cpp \
+    oxfold_wrapper.cpp \
     page_downloaded.cpp \
     page_downloading.cpp \
     page_shared.cpp \
     page_sharing.cpp
 
 HEADERS += \
+    ZeroTierSockets.h \
+    httplib.h \
     mainwindow.h \
-    my_shared_files_table.h \
+    oxfold_wrapper.h \
     page_downloaded.h \
     page_downloading.h \
     page_shared.h \
@@ -49,3 +51,10 @@ DISTFILES +=
 
 RESOURCES += \
     res.qrc
+
+macx: LIBS += -L$$PWD/libs/macos-x86_64/ -lzt
+
+INCLUDEPATH += $$PWD/libs/macos-x86_64
+DEPENDPATH += $$PWD/libs/macos-x86_64
+
+macx: PRE_TARGETDEPS += $$PWD/libs/macos-x86_64/libzt.a
