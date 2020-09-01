@@ -3,7 +3,11 @@
 #include <QResizeEvent>
 #include <QFileDialog>
 #include <QDateTime>
-
+#include "oxfold_wrapper.h"
+#include <QDebug>
+#include <QJsonObject>
+#include <QJsonDocument>
+#include "sharing_dialog.h"
 
 Page_shared::Page_shared(QWidget *parent) :
     QWidget(parent),
@@ -21,29 +25,7 @@ Page_shared::~Page_shared()
     delete ui;
 }
 
-QString converFileSizeToKBMBGB(qint64 filesize)
-{
-    QStringList units;
-    units << "B" << "KB" << "MB" << "GB" << "TB" << "PB";
-    double mod  = 1024.0;
-    double size = filesize;
-    //qDebug() << size;
-    int i = 0;
-    long rest = 0;
-    while (size >= mod && i < units.count()-1 )
-    {
-        rest= (long)size % (long)mod ;
-        size /= mod;
-        i++;
-    }
-    QString szResult = QString::number(floor(size));
-    if( rest > 0)
-    {
-       szResult += QString(".") + QString::number(rest).left(2);
-    }
-    szResult += units[i];
-    return  szResult;
-}
+
 
 void Page_shared::init_table()
 {
@@ -142,9 +124,6 @@ void Page_shared::on_shared_file_tableWidget_itemClicked(QTableWidgetItem *item)
 
 }
 
-
-
-
 // the default dir for shared files are located in ~/oxfold/bigfiletool/shared、
 void Page_shared::on_bt_add_share_file_clicked()
 {
@@ -190,4 +169,56 @@ void Page_shared::on_bt_add_share_file_clicked()
         }
 
     }
+}
+
+
+qint64 getFileSize(QString shared_file_name)
+{
+    QString file_path = QDir::homePath() + "/oxfold/bigfiletool/shared/" +  shared_file_name;
+    QFileInfo info(file_path);
+
+    return info.size();
+}
+
+// sharing link looks like http://ip:8080/filename.ext
+void Page_shared::on_bt_share_file_clicked()
+{
+    QString host_ip = getNodeIPV4();
+    int     port = 8080;
+    QString file_name;
+    qint64  file_size;
+    QString pass_word = "abcd";
+
+    QTableWidget * t = ui->shared_file_tableWidget;
+    const int n_rows = t->rowCount();
+    for (int row=0; row!=n_rows; ++row)
+    {
+        QTableWidgetItem *  i = t->item(row, 0);
+        Qt::CheckState s = i->checkState();
+        if (s == Qt::Checked) {
+            i = t->item(row, 1);
+            file_name = i->text();
+            break;
+        }
+    }
+
+    file_size = getFileSize(file_name);
+
+    QString ext_link = "http://" + host_ip + ":8080/" + file_name;
+    qDebug("external link : %s", ext_link.toStdString().c_str());
+
+    QJsonObject external_link_data;
+    external_link_data["host_ip"]   = host_ip.toStdString().c_str();
+    external_link_data["host_port"] = port;
+    external_link_data["file_name"] = file_name.toStdString().c_str();
+    external_link_data["file_size"] = file_size;
+
+    QByteArray byteArray;
+    byteArray = QJsonDocument(external_link_data).toJson();
+    QString link = QString(byteArray.toStdString().c_str()).simplified();
+    qDebug("external_link_data byte array = %s", link.toStdString().c_str());
+
+   sharing_Dialog dlg(this);
+   dlg.init_data(link, pass_word);
+   dlg.exec();
 }

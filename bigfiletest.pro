@@ -17,30 +17,35 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    http_thread.cpp \
     main.cpp \
     mainwindow.cpp \
     oxfold_wrapper.cpp \
     page_downloaded.cpp \
     page_downloading.cpp \
     page_shared.cpp \
-    page_sharing.cpp
+    page_sharing.cpp \
+    sharing_dialog.cpp
 
 HEADERS += \
     ZeroTierSockets.h \
+    http_thread.h \
     httplib.h \
     mainwindow.h \
     oxfold_wrapper.h \
     page_downloaded.h \
     page_downloading.h \
     page_shared.h \
-    page_sharing.h
+    page_sharing.h \
+    sharing_dialog.h
 
 FORMS += \
     mainwindow.ui \
     page_downloaded.ui \
     page_downloading.ui \
     page_shared.ui \
-    page_sharing.ui
+    page_sharing.ui \
+    sharing_dialog.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

@@ -6,5 +6,6 @@
         <file>imgs/downloading.png</file>
         <file>imgs/sharing.png</file>
         <file>imgs/oxfold.png</file>
+        <file>imgs/sharing_link.png</file>
     </qresource>
 </RCC>

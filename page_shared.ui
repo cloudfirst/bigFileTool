@@ -115,7 +115,7 @@
     <rect>
      <x>100</x>
      <y>10</y>
-     <width>81</width>
+     <width>121</width>
      <height>32</height>
     </rect>
    </property>
@@ -123,13 +123,13 @@
     <string notr="true"/>
    </property>
    <property name="text">
-    <string>分享</string>
+    <string>生成分享链接</string>
    </property>
   </widget>
   <widget class="QPushButton" name="bt_delete_share">
    <property name="geometry">
     <rect>
-     <x>210</x>
+     <x>340</x>
      <y>10</y>
      <width>71</width>
      <height>32</height>
