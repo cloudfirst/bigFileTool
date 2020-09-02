@@ -11,8 +11,18 @@ using namespace std;
 /// HTTPThread_client::HTTPThread_client
 ///
 ///
+///
+HTTPThread_client::HTTPThread_client(QObject *parent) : QThread(parent)
+{
 
-HTTPThread_client::HTTPThread_client(QString dst_ip, int port, QString url)
+}
+
+HTTPThread_client::~HTTPThread_client()
+{
+    qDebug("HTTPThread_client terminated.");
+}
+
+void HTTPThread_client::init_thread(QString dst_ip, int port, QString url)
 {
     m_dst_ip = dst_ip;
     m_port   = port;
@@ -44,8 +54,18 @@ void HTTPThread_client::run()
 ////////////////////////////////////////////
 ///  HTTPThread_server::HTTPThread_server
 ///
+HTTPThread_server::HTTPThread_server(QObject *parent) : QThread(parent)
+{
 
-HTTPThread_server::HTTPThread_server(QString ipstr, int port, QString root)
+}
+
+HTTPThread_server::~HTTPThread_server()
+{
+    qDebug("HTTPThread_server terminated.");
+}
+
+
+void HTTPThread_server::init_thread(QString ipstr, int port, QString root)
 {
     m_ipstr = ipstr;
     m_port  = port;
@@ -69,5 +89,7 @@ void HTTPThread_server::run()
        return;
      }
 
+   qDebug("HTTPThread_server starte to listen ... ");
    svr.listen(m_ipstr.toStdString().c_str(), m_port);
+   qDebug("HTTPThread_server stop listening.");
 }

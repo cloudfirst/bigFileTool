@@ -8,7 +8,10 @@ class HTTPThread_client : public QThread
     Q_OBJECT
 
 public:
-    explicit HTTPThread_client(QString dst_ip, int port, QString url);
+    HTTPThread_client(QObject *parent);
+    ~HTTPThread_client();
+
+    void init_thread(QString dst_ip, int port, QString url);
 
 signals:
     void update_thread_status(QString, quint64, quint64);
@@ -28,8 +31,10 @@ class HTTPThread_server : public QThread
     Q_OBJECT
 
 public:
-    explicit HTTPThread_server(QString ipstr, int port, QString root);
+    HTTPThread_server(QObject *parent);
+    ~HTTPThread_server();
 
+    void  init_thread(QString ipstr, int port, QString root);
 protected:
     void run() override;
 

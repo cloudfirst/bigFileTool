@@ -180,8 +180,9 @@ void Page_downloading::add_new_download_task(QString data)
         }
 
         // start dowload http client thread
-        HTTPThread_client *downlaod_client = new HTTPThread_client(host_ip, host_port, file_name );
-        connect(downlaod_client,SIGNAL(update_thread_status(QString,quint64, quint64)), this, SLOT(update_download_task(QString,quint64, quint64)));
+        HTTPThread_client *downlaod_client = new HTTPThread_client(this);
+        downlaod_client->init_thread(host_ip, host_port, file_name);
+        connect(downlaod_client,SIGNAL(update_thread_status(QString, quint64, quint64)), this, SLOT(update_download_task(QString,quint64, quint64)));
         downlaod_client->start();
     }
 

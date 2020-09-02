@@ -33,7 +33,8 @@ MainWindow::MainWindow(QWidget *parent)
     //start http server
     QString node_ip = getNodeIPV4();
     QString root = QDir::homePath() + "/oxfold/bigfiletool/shared";
-    m_http_server_t = new HTTPThread_server(node_ip, 8080, root);
+    m_http_server_t = new HTTPThread_server(this);
+    m_http_server_t->init_thread(node_ip, 8080, root);
     m_http_server_t->start();
 }
 
