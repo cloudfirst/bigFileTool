@@ -23,7 +23,7 @@ void HTTPThread_client::run()
 {
     httplib::Client cli(m_dst_ip.toStdString().c_str(), m_port);
     ofstream myfile;
-    QString dst_file = QDir::homePath() + "/oxfold/bigfiletool/downloaded/" + m_url;
+    QString dst_file = QDir::homePath() + "/oxfold/bigfiletool/downloading/" + m_url + ".downloading";
 
     myfile.open (dst_file.toStdString().c_str(), ios::out | ios::app | ios::binary);
 
@@ -33,7 +33,8 @@ void HTTPThread_client::run()
            return true;
          },
         [&](uint64_t len, uint64_t total) {
-          qDebug("%lld / %lld bytes => %d%% complete\n", len, total, (int)(len*100/total));
+          qDebug("http client thread: %lld / %lld bytes => %d%% complete\n", len, total, (int)(len*100/total));
+          emit update_thread_status(m_url, len, total);
           return true; // return 'false' if you want to cancel the request.
         }
     );

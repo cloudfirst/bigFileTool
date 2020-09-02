@@ -15,13 +15,16 @@ public:
     explicit Add_link_Dialog(QWidget *parent = nullptr);
     ~Add_link_Dialog();
 
+signals:
+    void update_parent(QString data);
+
 private slots:
     void on_bt_add_clicked();
     void on_bt_quit_clicked();
 
 private:
     void try_to_get_link_from_clipboard();
-    void parse_link();
+    void parse_and_save_link();
 
 private:
     Ui::Add_link_Dialog *ui;

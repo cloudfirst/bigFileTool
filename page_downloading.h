@@ -21,6 +21,10 @@ public:
 protected:
     virtual void resizeEvent(QResizeEvent *e) override;
 
+public slots:
+    void add_new_download_task(QString data);
+    void update_download_task(QString fname, quint64 len, quint64 total);
+
 private slots:
     void on_bt_pause_all_clicked();
 
