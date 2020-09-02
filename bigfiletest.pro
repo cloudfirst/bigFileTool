@@ -17,6 +17,8 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    add_link_dialog.cpp \
+    encrypt/simple_encrypt.cpp \
     http_thread.cpp \
     main.cpp \
     mainwindow.cpp \
@@ -29,6 +31,8 @@ SOURCES += \
 
 HEADERS += \
     ZeroTierSockets.h \
+    add_link_dialog.h \
+    encrypt/simple_encrypt.h \
     http_thread.h \
     httplib.h \
     mainwindow.h \
@@ -40,6 +44,7 @@ HEADERS += \
     sharing_dialog.h
 
 FORMS += \
+    add_link_dialog.ui \
     mainwindow.ui \
     page_downloaded.ui \
     page_downloading.ui \

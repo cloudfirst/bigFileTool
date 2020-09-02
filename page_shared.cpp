@@ -8,6 +8,7 @@
 #include <QJsonObject>
 #include <QJsonDocument>
 #include "sharing_dialog.h"
+#include "encrypt/simple_encrypt.h"
 
 Page_shared::Page_shared(QWidget *parent) :
     QWidget(parent),
@@ -180,6 +181,25 @@ qint64 getFileSize(QString shared_file_name)
     return info.size();
 }
 
+QString simple_encrypt(QString input, QString pass_word)
+{
+    quint64 key = pass_word.toULongLong();
+    SimpleCrypt processSimpleCrypt(key);
+
+    QString output = processSimpleCrypt.encryptToString(input);
+    return output;
+}
+
+QString my_randString(int len)
+{
+    QString str;
+    str.resize(len);
+    for (int s = 0; s < len ; ++s)
+        str[s] = QChar('A' + char(qrand() % ('Z' - 'A')));
+
+    return str;
+}
+
 // sharing link looks like http://ip:8080/filename.ext
 void Page_shared::on_bt_share_file_clicked()
 {
@@ -187,7 +207,7 @@ void Page_shared::on_bt_share_file_clicked()
     int     port = 8080;
     QString file_name;
     qint64  file_size;
-    QString pass_word = "abcd";
+    QString pass_word = my_randString(6);
 
     QTableWidget * t = ui->shared_file_tableWidget;
     const int n_rows = t->rowCount();
@@ -218,7 +238,10 @@ void Page_shared::on_bt_share_file_clicked()
     QString link = QString(byteArray.toStdString().c_str()).simplified();
     qDebug("external_link_data byte array = %s", link.toStdString().c_str());
 
-   sharing_Dialog dlg(this);
-   dlg.init_data(link, pass_word);
-   dlg.exec();
+    link = simple_encrypt(link, pass_word);
+    qDebug("encrypted external_link_data is : %s", link.toStdString().c_str());
+
+    sharing_Dialog dlg(this);
+    dlg.init_data(link, pass_word);
+    dlg.exec();
 }

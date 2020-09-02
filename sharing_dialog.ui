@@ -17,9 +17,9 @@
    <property name="geometry">
     <rect>
      <x>30</x>
-     <y>120</y>
+     <y>110</y>
      <width>811</width>
-     <height>31</height>
+     <height>51</height>
     </rect>
    </property>
    <property name="styleSheet">
@@ -28,12 +28,15 @@
    <property name="text">
     <string/>
    </property>
+   <property name="wordWrap">
+    <bool>true</bool>
+   </property>
   </widget>
   <widget class="QLabel" name="label_2">
    <property name="geometry">
     <rect>
      <x>30</x>
-     <y>90</y>
+     <y>80</y>
      <width>201</width>
      <height>16</height>
     </rect>
@@ -59,7 +62,7 @@
    <property name="geometry">
     <rect>
      <x>30</x>
-     <y>190</y>
+     <y>200</y>
      <width>151</width>
      <height>31</height>
     </rect>

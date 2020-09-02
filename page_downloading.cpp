@@ -5,6 +5,7 @@
 #include <QDateTime>
 #include "oxfold_wrapper.h"
 #include <QDebug>
+#include "add_link_dialog.h"
 
 Page_downloading::Page_downloading(QWidget *parent) :
     QWidget(parent),
@@ -104,5 +105,6 @@ void Page_downloading::on_bt_delete_clicked()
 
 void Page_downloading::on_bt_add_clicked()
 {
-
+    Add_link_Dialog dlg(this);
+    dlg.exec();
 }
