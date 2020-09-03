@@ -89,6 +89,10 @@ void Page_downloading::init_table()
             }
             t->setItem(t->rowCount()-1, col, i);
         }
+
+        HTTPThread_client  *hc_thread = new HTTPThread_client(this);
+        hc_thread->init_thread(obj["file_name"].toString(), obj["host_port"].toInt(), obj["file_name"].toString());
+        this->m_client_s.append(hc_thread);
     }
 }
 
@@ -116,12 +120,24 @@ void Page_downloading::resizeEvent(QResizeEvent *e)
 
 void Page_downloading::on_bt_pause_all_clicked()
 {
-
+    for (int index=0; index < m_client_s.count(); index++)
+    {
+        HTTPThread_client* hc_thread = m_client_s[index];
+        if (hc_thread->isRunning()) {
+            hc_thread->exit();
+        }
+    }
 }
 
 void Page_downloading::on_bt_start_all_clicked()
 {
-
+    for (int index=0; index < m_client_s.count(); index++)
+    {
+        HTTPThread_client* hc_thread = m_client_s[index];
+        if (!hc_thread->isRunning()) {
+            hc_thread->start();
+        }
+    }
 }
 
 void Page_downloading::on_bt_delete_clicked()
@@ -184,6 +200,7 @@ void Page_downloading::add_new_download_task(QString data)
         downlaod_client->init_thread(host_ip, host_port, file_name);
         connect(downlaod_client,SIGNAL(update_thread_status(QString, quint64, quint64)), this, SLOT(update_download_task(QString,quint64, quint64)));
         downlaod_client->start();
+        m_client_s.append(downlaod_client);
     }
 
 }
@@ -194,3 +211,39 @@ void Page_downloading::update_download_task(QString fname,quint64 len, quint64 t
 
 }
 
+
+void Page_downloading::on_tableWidget_itemClicked(QTableWidgetItem *item)
+{
+    QTableWidget * t = ui->tableWidget;
+    const int n_rows = t->rowCount();
+    for (int row=0; row!=n_rows; ++row)
+    {
+        QTableWidgetItem *  i = t->item(row, 0);
+        i->setCheckState(Qt::Unchecked);
+    }
+
+    int row = item->row();
+    QTableWidgetItem *  i = t->item(row, 0);
+    Qt::CheckState s = i->checkState();
+    if (s == Qt::Unchecked) {
+        i->setCheckState(Qt::Checked);
+        ui->bt_delete->setVisible(true);
+        ui->bt_start_one->setVisible(true);
+        ui->bt_pause_one->setVisible(true);
+    }else {
+        i->setCheckState(Qt::Unchecked);
+        ui->bt_delete->setVisible(false);
+        ui->bt_start_one->setVisible(false);
+        ui->bt_pause_one->setVisible(false);
+    }
+}
+
+void Page_downloading::on_bt_start_one_clicked()
+{
+
+}
+
+void Page_downloading::on_bt_pause_one_clicked()
+{
+
+}

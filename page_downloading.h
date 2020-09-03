@@ -3,6 +3,8 @@
 
 #include <QWidget>
 #include <QTableWidgetItem>
+#include "http_thread.h"
+#include <QList>
 
 namespace Ui {
 class Page_downloading;
@@ -34,8 +36,15 @@ private slots:
 
     void on_bt_add_clicked();
 
+    void on_tableWidget_itemClicked(QTableWidgetItem *item);
+
+    void on_bt_start_one_clicked();
+
+    void on_bt_pause_one_clicked();
+
 private:
     Ui::Page_downloading *ui;
+    QList<HTTPThread_client*>  m_client_s;
 };
 
 #endif // PAGE_DOWNLOADING_H
