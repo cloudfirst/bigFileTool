@@ -38,7 +38,7 @@ void HTTPThread_client::run()
     myfile.open (dst_file.toStdString().c_str(), ios::out | ios::app | ios::binary);
 
     QString url = "/" + m_url;
-    auto res = cli.Get(url.toStdString().c_str(),
+    if (auto res = cli.Get(url.toStdString().c_str(),
        [&](const char *data, size_t data_length) {
            myfile.write(data, data_length);
            return true;
@@ -47,8 +47,13 @@ void HTTPThread_client::run()
           qDebug("http client thread: %lld / %lld bytes => %d%% complete\n", len, total, (int)(len*100/total));
           emit update_thread_status(m_url, len, total);
           return true; // return 'false' if you want to cancel the request.
-        }
-    );
+        }))
+    {
+        qDebug("status:%d", res->status);
+        //qDebug("content-type:%s", res->get_header_value("Content-Type"));
+    } else {
+        qDebug("error code: %d", res.error());
+    }
 }
 
 
