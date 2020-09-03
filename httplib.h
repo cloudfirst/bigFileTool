@@ -228,9 +228,6 @@ inline const unsigned char *ASN1_STRING_get0_data(const ASN1_STRING *asn1) {
 #include <brotli/encode.h>
 #endif
 
-
-#include "ZeroTierSockets.h"
-
 /*
  * Declaration
  */
@@ -538,16 +535,16 @@ using SocketOptions = std::function<void(socket_t sock)>;
 inline void default_socket_options(socket_t sock) {
   int yes = 1;
 #ifdef _WIN32
-  zts_setsockopt(sock, ZTS_SOL_SOCKET, ZTS_SO_REUSEADDR, reinterpret_cast<char *>(&yes),
+  setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<char *>(&yes),
              sizeof(yes));
-  zts_setsockopt(sock, ZTS_SOL_SOCKET, ZTS_SO_EXCLUSIVEADDRUSE,
+  setsockopt(sock, SOL_SOCKET, SO_EXCLUSIVEADDRUSE,
              reinterpret_cast<char *>(&yes), sizeof(yes));
 #else
 #ifdef SO_REUSEPORT
-  zts_setsockopt(sock, ZTS_SOL_SOCKET, ZTS_SO_REUSEPORT, reinterpret_cast<void *>(&yes),
+  setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, reinterpret_cast<void *>(&yes),
              sizeof(yes));
 #else
-  zts_setsockopt(sock, ZTS_SOL_SOCKET, ZTS_SO_REUSEADDR, reinterpret_cast<void *>(&yes),
+  setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<void *>(&yes),
              sizeof(yes));
 #endif
 #endif
@@ -1554,7 +1551,11 @@ private:
 };
 
 inline int close_socket(socket_t sock) {
-  return zts_close(sock);
+#ifdef _WIN32
+  return closesocket(sock);
+#else
+  return close(sock);
+#endif
 }
 
 template <typename T> inline ssize_t handle_EINTR(T fn) {
@@ -1569,90 +1570,90 @@ template <typename T> inline ssize_t handle_EINTR(T fn) {
 
 inline ssize_t select_read(socket_t sock, time_t sec, time_t usec) {
 #ifdef CPPHTTPLIB_USE_POLL
-  zts_pollfd pfd_read;
+  struct pollfd pfd_read;
   pfd_read.fd = sock;
-  pfd_read.events = ZTS_POLLIN;
+  pfd_read.events = POLLIN;
 
   auto timeout = static_cast<int>(sec * 1000 + usec / 1000);
 
-  return handle_EINTR([&]() { return zts_poll(&pfd_read, 1, timeout); });
+  return handle_EINTR([&]() { return poll(&pfd_read, 1, timeout); });
 #else
-  zts_fd_set fds;
-  ZTS_FD_ZERO(&fds);
-  ZTS_FD_SET(sock, &fds);
+  fd_set fds;
+  FD_ZERO(&fds);
+  FD_SET(sock, &fds);
 
-  zts_timeval tv;
+  timeval tv;
   tv.tv_sec = static_cast<long>(sec);
   tv.tv_usec = static_cast<decltype(tv.tv_usec)>(usec);
 
   return handle_EINTR([&]() {
-    return zts_select(static_cast<int>(sock + 1), &fds, nullptr, nullptr, &tv);
+    return select(static_cast<int>(sock + 1), &fds, nullptr, nullptr, &tv);
   });
 #endif
 }
 
 inline ssize_t select_write(socket_t sock, time_t sec, time_t usec) {
 #ifdef CPPHTTPLIB_USE_POLL
-  zts_pollfd pfd_read;
+  struct pollfd pfd_read;
   pfd_read.fd = sock;
-  pfd_read.events = ZTS_POLLOUT;
+  pfd_read.events = POLLOUT;
 
   auto timeout = static_cast<int>(sec * 1000 + usec / 1000);
 
-  return handle_EINTR([&]() { return zts_poll(&pfd_read, 1, timeout); });
+  return handle_EINTR([&]() { return poll(&pfd_read, 1, timeout); });
 #else
-  zts_fd_set fds;
-  ZTS_FD_ZERO(&fds);
-  ZTS_FD_SET(sock, &fds);
+  fd_set fds;
+  FD_ZERO(&fds);
+  FD_SET(sock, &fds);
 
-  zts_timeval tv;
+  timeval tv;
   tv.tv_sec = static_cast<long>(sec);
   tv.tv_usec = static_cast<decltype(tv.tv_usec)>(usec);
 
   return handle_EINTR([&]() {
-    return zts_select(static_cast<int>(sock + 1), nullptr, &fds, nullptr, &tv);
+    return select(static_cast<int>(sock + 1), nullptr, &fds, nullptr, &tv);
   });
 #endif
 }
 
 inline bool wait_until_socket_is_ready(socket_t sock, time_t sec, time_t usec) {
 #ifdef CPPHTTPLIB_USE_POLL
-  zts_pollfd pfd_read;
+  struct pollfd pfd_read;
   pfd_read.fd = sock;
-  pfd_read.events = ZTS_POLLIN | ZTS_POLLOUT;
+  pfd_read.events = POLLIN | POLLOUT;
 
   auto timeout = static_cast<int>(sec * 1000 + usec / 1000);
 
-  auto poll_res = handle_EINTR([&]() { return zts_poll(&pfd_read, 1, timeout); });
+  auto poll_res = handle_EINTR([&]() { return poll(&pfd_read, 1, timeout); });
 
-  if (poll_res > 0 && pfd_read.revents & (ZTS_POLLIN | ZTS_POLLOUT)) {
+  if (poll_res > 0 && pfd_read.revents & (POLLIN | POLLOUT)) {
     int error = 0;
-    zts_socklen_t len = sizeof(error);
-    auto res = zts_getsockopt(sock, ZTS_SOL_SOCKET, ZTS_SO_ERROR,
+    socklen_t len = sizeof(error);
+    auto res = getsockopt(sock, SOL_SOCKET, SO_ERROR,
                           reinterpret_cast<char *>(&error), &len);
     return res >= 0 && !error;
   }
   return false;
 #else
-  zts_fd_set fdsr;
-  ZTS_FD_ZERO(&fdsr);
-  ZTS_FD_SET(sock, &fdsr);
+  fd_set fdsr;
+  FD_ZERO(&fdsr);
+  FD_SET(sock, &fdsr);
 
   auto fdsw = fdsr;
   auto fdse = fdsr;
 
-  zts_timeval tv;
+  timeval tv;
   tv.tv_sec = static_cast<long>(sec);
   tv.tv_usec = static_cast<decltype(tv.tv_usec)>(usec);
 
   auto ret = handle_EINTR([&]() {
-    return zts_select(static_cast<int>(sock + 1), &fdsr, &fdsw, &fdse, &tv);
+    return select(static_cast<int>(sock + 1), &fdsr, &fdsw, &fdse, &tv);
   });
 
-  if (ret > 0 && (ZTS_FD_ISSET(sock, &fdsr) || ZTS_FD_ISSET(sock, &fdsw))) {
+  if (ret > 0 && (FD_ISSET(sock, &fdsr) || FD_ISSET(sock, &fdsw))) {
     int error = 0;
-    zts_socklen_t len = sizeof(error);
-    return zts_getsockopt(sock, ZTS_SOL_SOCKET, ZTS_SO_ERROR,
+    socklen_t len = sizeof(error);
+    return getsockopt(sock, SOL_SOCKET, SO_ERROR,
                       reinterpret_cast<char *>(&error), &len) >= 0 &&
            !error;
   }
@@ -1785,7 +1786,11 @@ inline bool process_client_socket(socket_t sock, time_t read_timeout_sec,
 }
 
 inline int shutdown_socket(socket_t sock) {
-  return zts_shutdown(sock, ZTS_SHUT_RDWR);
+#ifdef _WIN32
+  return shutdown(sock, SD_BOTH);
+#else
+  return shutdown(sock, SHUT_RDWR);
+#endif
 }
 
 template <typename BindOrConnect>
@@ -1797,8 +1802,8 @@ socket_t create_socket(const char *host, int port, int socket_flags,
   struct addrinfo *result;
 
   memset(&hints, 0, sizeof(struct addrinfo));
-  hints.ai_family = ZTS_AF_UNSPEC;
-  hints.ai_socktype = ZTS_SOCK_STREAM;
+  hints.ai_family = AF_UNSPEC;
+  hints.ai_socktype = SOCK_STREAM;
   hints.ai_flags = socket_flags;
   hints.ai_protocol = 0;
 
@@ -1813,13 +1818,38 @@ socket_t create_socket(const char *host, int port, int socket_flags,
 
   for (auto rp = result; rp; rp = rp->ai_next) {
     // Create a socket
-    auto sock = zts_socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-
+#ifdef _WIN32
+    auto sock = WSASocketW(rp->ai_family, rp->ai_socktype, rp->ai_protocol,
+                           nullptr, 0, WSA_FLAG_NO_HANDLE_INHERIT);
+    /**
+     * Since the WSA_FLAG_NO_HANDLE_INHERIT is only supported on Windows 7 SP1
+     * and above the socket creation fails on older Windows Systems.
+     *
+     * Let's try to create a socket the old way in this case.
+     *
+     * Reference:
+     * https://docs.microsoft.com/en-us/windows/win32/api/winsock2/nf-winsock2-wsasocketa
+     *
+     * WSA_FLAG_NO_HANDLE_INHERIT:
+     * This flag is supported on Windows 7 with SP1, Windows Server 2008 R2 with
+     * SP1, and later
+     *
+     */
+    if (sock == INVALID_SOCKET) {
+      sock = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+    }
+#else
+    auto sock = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+#endif
     if (sock == INVALID_SOCKET) { continue; }
+
+#ifndef _WIN32
+    if (fcntl(sock, F_SETFD, FD_CLOEXEC) == -1) { continue; }
+#endif
 
     if (tcp_nodelay) {
       int yes = 1;
-      zts_setsockopt(sock, ZTS_IPPROTO_TCP, ZTS_TCP_NODELAY, reinterpret_cast<char *>(&yes),
+      setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, reinterpret_cast<char *>(&yes),
                  sizeof(yes));
     }
 
@@ -1827,7 +1857,7 @@ socket_t create_socket(const char *host, int port, int socket_flags,
 
     if (rp->ai_family == AF_INET6) {
       int no = 0;
-      zts_setsockopt(sock, ZTS_IPPROTO_IPV6, ZTS_IPV6_V6ONLY, reinterpret_cast<char *>(&no),
+      setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, reinterpret_cast<char *>(&no),
                  sizeof(no));
     }
 
@@ -1845,15 +1875,22 @@ socket_t create_socket(const char *host, int port, int socket_flags,
 }
 
 inline void set_nonblocking(socket_t sock, bool nonblocking) {
-
-  auto flags = zts_fcntl(sock, ZTS_F_GETFL, 0);
-  zts_fcntl(sock, ZTS_F_SETFL,
-        nonblocking ? (flags | ZTS_O_NONBLOCK) : (flags & (~ZTS_O_NONBLOCK)));
-
+#ifdef _WIN32
+  auto flags = nonblocking ? 1UL : 0UL;
+  ioctlsocket(sock, FIONBIO, &flags);
+#else
+  auto flags = fcntl(sock, F_GETFL, 0);
+  fcntl(sock, F_SETFL,
+        nonblocking ? (flags | O_NONBLOCK) : (flags & (~O_NONBLOCK)));
+#endif
 }
 
 inline bool is_connection_error() {
-  return errno != ZTS_EINPROGRESS;
+#ifdef _WIN32
+  return WSAGetLastError() != WSAEWOULDBLOCK;
+#else
+  return errno != EINPROGRESS;
+#endif
 }
 
 inline bool bind_ip_address(socket_t sock, const char *host) {
@@ -1861,8 +1898,8 @@ inline bool bind_ip_address(socket_t sock, const char *host) {
   struct addrinfo *result;
 
   memset(&hints, 0, sizeof(struct addrinfo));
-  hints.ai_family = ZTS_AF_UNSPEC;
-  hints.ai_socktype = ZTS_SOCK_STREAM;
+  hints.ai_family = AF_UNSPEC;
+  hints.ai_socktype = SOCK_STREAM;
   hints.ai_protocol = 0;
 
   if (getaddrinfo(host, "0", &hints, &result)) { return false; }
@@ -1870,7 +1907,7 @@ inline bool bind_ip_address(socket_t sock, const char *host) {
   auto ret = false;
   for (auto rp = result; rp; rp = rp->ai_next) {
     const auto &ai = *rp;
-    if (!zts_bind(sock, (struct zts_sockaddr*)ai.ai_addr, static_cast<zts_socklen_t>(ai.ai_addrlen))) {
+    if (!::bind(sock, ai.ai_addr, static_cast<socklen_t>(ai.ai_addrlen))) {
       ret = true;
       break;
     }
@@ -1886,12 +1923,12 @@ inline std::string if2ip(const std::string &ifn) {
   getifaddrs(&ifap);
   for (auto ifa = ifap; ifa; ifa = ifa->ifa_next) {
     if (ifa->ifa_addr && ifn == ifa->ifa_name) {
-      if (ifa->ifa_addr->sa_family == ZTS_AF_INET) {
-        auto sa = reinterpret_cast<struct zts_sockaddr_in *>(ifa->ifa_addr);
-        char buf[ZTS_INET_ADDRSTRLEN];
-        if (zts_inet_ntop(ZTS_AF_INET, &sa->sin_addr, buf, ZTS_INET_ADDRSTRLEN)) {
+      if (ifa->ifa_addr->sa_family == AF_INET) {
+        auto sa = reinterpret_cast<struct sockaddr_in *>(ifa->ifa_addr);
+        char buf[INET_ADDRSTRLEN];
+        if (inet_ntop(AF_INET, &sa->sin_addr, buf, INET_ADDRSTRLEN)) {
           freeifaddrs(ifap);
-          return std::string(buf, ZTS_INET_ADDRSTRLEN);
+          return std::string(buf, INET_ADDRSTRLEN);
         }
       }
     }
@@ -1923,7 +1960,7 @@ inline socket_t create_client_socket(const char *host, int port,
         set_nonblocking(sock, true);
 
         auto ret =
-            zts_connect(sock, (struct zts_sockaddr*)ai.ai_addr, static_cast<zts_socklen_t>(ai.ai_addrlen));
+            ::connect(sock, ai.ai_addr, static_cast<socklen_t>(ai.ai_addrlen));
 
         if (ret < 0) {
           if (is_connection_error() ||
@@ -1948,14 +1985,14 @@ inline socket_t create_client_socket(const char *host, int port,
   return sock;
 }
 
-inline void get_remote_ip_and_port(const struct zts_sockaddr_storage &addr,
-                                   zts_socklen_t addr_len, std::string &ip,
+inline void get_remote_ip_and_port(const struct sockaddr_storage &addr,
+                                   socklen_t addr_len, std::string &ip,
                                    int &port) {
-  if (addr.ss_family == ZTS_AF_INET) {
-    port = zts_ntohs(reinterpret_cast<const struct zts_sockaddr_in *>(&addr)->sin_port);
-  } else if (addr.ss_family == ZTS_AF_INET6) {
+  if (addr.ss_family == AF_INET) {
+    port = ntohs(reinterpret_cast<const struct sockaddr_in *>(&addr)->sin_port);
+  } else if (addr.ss_family == AF_INET6) {
     port =
-        zts_ntohs(reinterpret_cast<const struct zts_sockaddr_in6 *>(&addr)->sin6_port);
+        ntohs(reinterpret_cast<const struct sockaddr_in6 *>(&addr)->sin6_port);
   }
 
   std::array<char, NI_MAXHOST> ipstr{};
@@ -1967,10 +2004,10 @@ inline void get_remote_ip_and_port(const struct zts_sockaddr_storage &addr,
 }
 
 inline void get_remote_ip_and_port(socket_t sock, std::string &ip, int &port) {
-  struct zts_sockaddr_storage addr;
-  zts_socklen_t addr_len = sizeof(addr);
+  struct sockaddr_storage addr;
+  socklen_t addr_len = sizeof(addr);
 
-  if (!zts_getpeername(sock, reinterpret_cast<struct zts_sockaddr *>(&addr),
+  if (!getpeername(sock, reinterpret_cast<struct sockaddr *>(&addr),
                    &addr_len)) {
     get_remote_ip_and_port(addr, addr_len, ip, port);
   }
@@ -3651,13 +3688,27 @@ inline bool SocketStream::is_writable() const {
 inline ssize_t SocketStream::read(char *ptr, size_t size) {
   if (!is_readable()) { return -1; }
 
-  return handle_EINTR([&]() { return zts_recv(sock_, ptr, size, 0); });
+#ifdef _WIN32
+  if (size > static_cast<size_t>((std::numeric_limits<int>::max)())) {
+    return -1;
+  }
+  return recv(sock_, ptr, static_cast<int>(size), 0);
+#else
+  return handle_EINTR([&]() { return recv(sock_, ptr, size, 0); });
+#endif
 }
 
 inline ssize_t SocketStream::write(const char *ptr, size_t size) {
   if (!is_writable()) { return -1; }
 
-  return handle_EINTR([&]() { return zts_send(sock_, ptr, size, 0); });
+#ifdef _WIN32
+  if (size > static_cast<size_t>((std::numeric_limits<int>::max)())) {
+    return -1;
+  }
+  return send(sock_, ptr, static_cast<int>(size), 0);
+#else
+  return handle_EINTR([&]() { return send(sock_, ptr, size, 0); });
+#endif
 }
 
 inline void SocketStream::get_remote_ip_and_port(std::string &ip,
@@ -4230,10 +4281,10 @@ Server::create_server_socket(const char *host, int port, int socket_flags,
   return detail::create_socket(
       host, port, socket_flags, tcp_nodelay_, socket_options,
       [](socket_t sock, struct addrinfo &ai) -> bool {
-        if (zts_bind(sock, (struct zts_sockaddr*)ai.ai_addr, static_cast<zts_socklen_t>(ai.ai_addrlen))) {
+        if (::bind(sock, ai.ai_addr, static_cast<socklen_t>(ai.ai_addrlen))) {
           return false;
         }
-        if (zts_listen(sock, 5)) { // Listen through 5 channels
+        if (::listen(sock, 5)) { // Listen through 5 channels
           return false;
         }
         return true;
@@ -4247,16 +4298,16 @@ inline int Server::bind_internal(const char *host, int port, int socket_flags) {
   if (svr_sock_ == INVALID_SOCKET) { return -1; }
 
   if (port == 0) {
-    struct zts_sockaddr_storage addr;
-    zts_socklen_t addr_len = sizeof(addr);
-    if (zts_getsockname(svr_sock_, reinterpret_cast<struct zts_sockaddr *>(&addr),
+    struct sockaddr_storage addr;
+    socklen_t addr_len = sizeof(addr);
+    if (getsockname(svr_sock_, reinterpret_cast<struct sockaddr *>(&addr),
                     &addr_len) == -1) {
       return -1;
     }
-    if (addr.ss_family == ZTS_AF_INET) {
-      return zts_ntohs(reinterpret_cast<struct zts_sockaddr_in *>(&addr)->sin_port);
-    } else if (addr.ss_family == ZTS_AF_INET6) {
-      return zts_ntohs(reinterpret_cast<struct zts_sockaddr_in6 *>(&addr)->sin6_port);
+    if (addr.ss_family == AF_INET) {
+      return ntohs(reinterpret_cast<struct sockaddr_in *>(&addr)->sin_port);
+    } else if (addr.ss_family == AF_INET6) {
+      return ntohs(reinterpret_cast<struct sockaddr_in6 *>(&addr)->sin6_port);
     } else {
       return -1;
     }
@@ -4285,7 +4336,7 @@ inline bool Server::listen_internal() {
 #ifndef _WIN32
       }
 #endif
-      socket_t sock = zts_accept(svr_sock_, nullptr, nullptr);
+      socket_t sock = accept(svr_sock_, nullptr, nullptr);
 
       if (sock == INVALID_SOCKET) {
         if (errno == EMFILE) {
