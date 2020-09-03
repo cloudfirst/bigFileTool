@@ -92,6 +92,7 @@ void Page_downloading::init_table()
 
         HTTPThread_client  *hc_thread = new HTTPThread_client(this);
         hc_thread->init_thread(obj["host_ip"].toString(), obj["host_port"].toInt(), obj["file_name"].toString());
+        connect(hc_thread,SIGNAL(update_thread_status(QString, quint64, quint64)), this, SLOT(update_download_task(QString,quint64, quint64)));
         this->m_client_s.append(hc_thread);
     }
 }
@@ -199,8 +200,8 @@ void Page_downloading::add_new_download_task(QString data)
         HTTPThread_client *downlaod_client = new HTTPThread_client(this);
         downlaod_client->init_thread(host_ip, host_port, file_name);
         connect(downlaod_client,SIGNAL(update_thread_status(QString, quint64, quint64)), this, SLOT(update_download_task(QString,quint64, quint64)));
-        downlaod_client->start();
         m_client_s.append(downlaod_client);
+        downlaod_client->start();
     }
 
 }
@@ -208,7 +209,19 @@ void Page_downloading::add_new_download_task(QString data)
 void Page_downloading::update_download_task(QString fname,quint64 len, quint64 total)
 {
     qDebug("Page_downloading: %s %lld / %lld bytes => %d%% complete\n", fname.toStdString().c_str(), len, total, (int)(len*100/total));
+    if (len >= total) {
+        qDebug("http client completed.");
+        // rename and move file to downloaded dir
+        QString old_file = QDir::homePath() + "/oxfold/bigfiletool/downloading/" + fname + ".downloading";
+        QString new_file = QDir::homePath() + "/oxfold/bigfiletool/downloaded/" + fname;
+        QFile::rename(old_file, new_file);
 
+        // remove downloading info
+        QString old_info_file = QDir::homePath() + "/oxfold/bigfiletool/downloading/" + fname + ".info";
+        QFile(old_info_file).remove();
+
+        // mark tableWidget Item
+    }
 }
 
 

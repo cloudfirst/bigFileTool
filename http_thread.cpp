@@ -90,7 +90,7 @@ void HTTPThread_server::run()
        return;
      }
 
-   qDebug("HTTPThread_server starte to listen ... ");
+   qDebug("HTTPThread_server starte to listen on %s:%d... ", m_ipstr.toStdString().c_str(), m_port);
    svr.listen(m_ipstr.toStdString().c_str(), m_port);
-   qDebug("HTTPThread_server stop listening.");
+   qDebug("HTTPThread_server stop listening on %s:%d... ", m_ipstr.toStdString().c_str(), m_port);
 }
