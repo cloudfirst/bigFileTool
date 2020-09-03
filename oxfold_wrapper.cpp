@@ -157,7 +157,8 @@ int stop_oxfold()
 }
 
 QString getNodeIPV4() {
-    return myNode.ipV4;
+    //return myNode.ipV4;
+    return "192.168.1.2";
 }
 
 QString getNodeIPV6() {

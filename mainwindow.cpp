@@ -28,7 +28,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->stackedWidget->addWidget(page4);
 
     //start oxfold network service
-    start_oxfold();
+    //start_oxfold();
 
     //start http server
     QString node_ip = getNodeIPV4();
@@ -42,7 +42,7 @@ MainWindow::~MainWindow()
 {
     delete ui;
     m_http_server_t->exit();
-    stop_oxfold();
+    //stop_oxfold();
 }
 
 void MainWindow::resizeEvent(QResizeEvent *e)
