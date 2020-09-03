@@ -27,6 +27,7 @@ void HTTPThread_client::init_thread(QString dst_ip, int port, QString url)
     m_dst_ip = dst_ip;
     m_port   = port;
     m_url    = url;
+    qDebug("HTTPThread_client::init_thread");
 }
 
 void HTTPThread_client::run()
@@ -70,6 +71,7 @@ void HTTPThread_server::init_thread(QString ipstr, int port, QString root)
     m_ipstr = ipstr;
     m_port  = port;
     m_root  = root;
+    qDebug("HTTPThread_server::init_thread");
 }
 
 
