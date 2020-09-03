@@ -37,7 +37,8 @@ void HTTPThread_client::run()
 
     myfile.open (dst_file.toStdString().c_str(), ios::out | ios::app | ios::binary);
 
-    auto res = cli.Get(m_url.toStdString().c_str(),
+    QString url = "/" + m_url;
+    auto res = cli.Get(url.toStdString().c_str(),
        [&](const char *data, size_t data_length) {
            myfile.write(data, data_length);
            return true;

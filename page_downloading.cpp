@@ -91,7 +91,7 @@ void Page_downloading::init_table()
         }
 
         HTTPThread_client  *hc_thread = new HTTPThread_client(this);
-        hc_thread->init_thread(obj["file_name"].toString(), obj["host_port"].toInt(), obj["file_name"].toString());
+        hc_thread->init_thread(obj["host_ip"].toString(), obj["host_port"].toInt(), obj["file_name"].toString());
         this->m_client_s.append(hc_thread);
     }
 }

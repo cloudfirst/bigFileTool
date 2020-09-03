@@ -117,9 +117,6 @@ void myZeroTierEventCallback(void *msgPtr)
     }
 }
 
-
-//28.84.116.100
-//29.2.230.84
 int start_oxfold()
 {
 
@@ -137,7 +134,7 @@ int start_oxfold()
     while (!myNode.online) { zts_delay_ms(50); }
     qDebug("This node's identity is stored in %s\n", home_path);
 
-    uint64_t nwid = 0x8056c2e21c000001;
+    uint64_t nwid = 0xa6f4adb92de77959; //0x8056c2e21c000001;
 
     if((err = zts_join(nwid)) != ZTS_ERR_OK) {
         qDebug("Unable to join network, error = %d. Exiting.\n", err);
