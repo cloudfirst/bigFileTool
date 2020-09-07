@@ -124,15 +124,15 @@ int start_oxfold()
 
     int err = ZTS_ERR_OK;
     zts_allow_network_caching(false);
-    const char* home_path = (QDir::homePath() + "/oxfold/bigfiletool/myrouter").toStdString().c_str();
+    QString home = QDir::homePath() + "/oxfold/bigfiletool/myrouter";
 
-    if((err = zts_start(home_path, &myZeroTierEventCallback, ztServicePort)) != ZTS_ERR_OK) {
+    if((err = zts_start(home.toStdString().c_str(), &myZeroTierEventCallback, ztServicePort)) != ZTS_ERR_OK) {
         qDebug("Unable to start service, error = %d. Exiting.\n", err);
         exit(1);
     }
     qDebug("Waiting for node to come online...\n");
     while (!myNode.online) { zts_delay_ms(50); }
-    qDebug("This node's identity is stored in %s\n", home_path);
+    qDebug("This node's identity is stored in %s\n", home.toStdString().c_str());
 
     uint64_t nwid = 0xa6f4adb92de77959; //0x8056c2e21c000001;
 
