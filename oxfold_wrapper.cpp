@@ -172,6 +172,7 @@ void init_bft_env()
     // ~/oxfold/bigfiletool/shared
     // ~/oxfold/bigfiletool/downloaded
     // ~/oxfold/bigfiletool/downloading
+    QString home = QDir::homePath();
     QDir dir1(QDir::homePath() + "/oxfold/bigfiletool/shared");
     if (!dir1.exists())
     {
@@ -188,9 +189,9 @@ void init_bft_env()
         dir3.mkpath(QDir::homePath() + "/oxfold/bigfiletool/downloading");
     }
     QDir dir4(QDir::homePath() + "/oxfold/bigfiletool/myrouter");
-    if (!dir3.exists())
+    if (!dir4.exists())
     {
-        dir3.mkpath(QDir::homePath() + "/oxfold/bigfiletool/myrouter");
+        dir4.mkpath(QDir::homePath() + "/oxfold/bigfiletool/myrouter");
     }
 
     // and init locale DB

@@ -9,6 +9,8 @@
 #include <QDir>
 #include <QString>
 
+void init_bft_env();
+void close_bft_env();
 int start_oxfold();
 int stop_oxfold();
 QString getNodeIPV4();

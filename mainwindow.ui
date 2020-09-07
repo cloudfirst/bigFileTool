@@ -28,6 +28,11 @@
     <height>1000</height>
    </size>
   </property>
+  <property name="font">
+   <font>
+    <pointsize>7</pointsize>
+   </font>
+  </property>
   <property name="windowTitle">
    <string>大文件共享工具 | 上海折叠网络</string>
   </property>
@@ -65,6 +70,11 @@
       <width>151</width>
       <height>26</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Microsoft YaHei</family>
+     </font>
     </property>
     <property name="text">
      <string>本地共享</string>
@@ -141,6 +151,11 @@
       <width>151</width>
       <height>26</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Microsoft YaHei</family>
+     </font>
     </property>
     <property name="text">
      <string>下载列表</string>
@@ -231,29 +246,42 @@
       <x>30</x>
       <y>90</y>
       <width>131</width>
-      <height>16</height>
+      <height>21</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <pointsize>18</pointsize>
+      <family>Microsoft YaHei</family>
+      <pointsize>12</pointsize>
      </font>
     </property>
     <property name="text">
      <string>大文件共享工具</string>
     </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
    </widget>
    <widget class="QLabel" name="label_5">
     <property name="geometry">
      <rect>
-      <x>58</x>
-      <y>112</y>
+      <x>60</x>
+      <y>120</y>
       <width>71</width>
       <height>16</height>
      </rect>
     </property>
+    <property name="font">
+     <font>
+      <family>Microsoft YaHei</family>
+      <pointsize>9</pointsize>
+     </font>
+    </property>
     <property name="text">
      <string>个人免费版</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
     </property>
    </widget>
    <widget class="QPushButton" name="pushButton">
@@ -264,6 +292,12 @@
       <width>141</width>
       <height>32</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Microsoft YaHei</family>
+      <pointsize>10</pointsize>
+     </font>
     </property>
     <property name="styleSheet">
      <string notr="true">background-color:white</string>
@@ -289,11 +323,15 @@
     </property>
     <property name="font">
      <font>
-      <pointsize>11</pointsize>
+      <family>Microsoft YaHei</family>
+      <pointsize>8</pointsize>
      </font>
     </property>
     <property name="text">
      <string>上海折叠网络科技有限公司</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
     </property>
    </widget>
    <widget class="QLabel" name="label_7">
@@ -302,12 +340,13 @@
       <x>20</x>
       <y>585</y>
       <width>141</width>
-      <height>20</height>
+      <height>21</height>
      </rect>
     </property>
     <property name="font">
      <font>
-      <pointsize>11</pointsize>
+      <family>Microsoft YaHei</family>
+      <pointsize>8</pointsize>
      </font>
     </property>
     <property name="text">
@@ -328,7 +367,8 @@
     </property>
     <property name="font">
      <font>
-      <pointsize>11</pointsize>
+      <family>Microsoft YaHei</family>
+      <pointsize>7</pointsize>
      </font>
     </property>
     <property name="text">

@@ -540,7 +540,7 @@ inline void default_socket_options(socket_t sock) {
 #ifdef _WIN32
   zts_setsockopt(sock, ZTS_SOL_SOCKET, ZTS_SO_REUSEADDR, reinterpret_cast<char *>(&yes),
              sizeof(yes));
-  zts_setsockopt(sock, ZTS_SOL_SOCKET, ZTS_SO_EXCLUSIVEADDRUSE,
+  zts_setsockopt(sock, ZTS_SOL_SOCKET, SO_EXCLUSIVEADDRUSE,
              reinterpret_cast<char *>(&yes), sizeof(yes));
 #else
 #ifdef SO_REUSEPORT

@@ -68,3 +68,10 @@ INCLUDEPATH += $$PWD/libs/macos-x86_64
 DEPENDPATH += $$PWD/libs/macos-x86_64
 
 macx: PRE_TARGETDEPS += $$PWD/libs/macos-x86_64/libzt.a
+
+
+win32: LIBS += -LZ:/test/3rdparty/lib/ -lzt-shared
+win32: LIBS += -LZ:/test/3rdparty/lib/ -lztcore
+
+# INCLUDEPATH += Z:/test//3rdparty/include
+DEPENDPATH  += Z:/test//3rdparty/lib
