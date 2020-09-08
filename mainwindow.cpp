@@ -42,6 +42,7 @@ MainWindow::~MainWindow()
 {
     delete ui;
     m_http_server_t->exit();
+
     close_bft_env();
 }
 

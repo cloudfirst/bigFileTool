@@ -154,7 +154,11 @@ int stop_oxfold()
 }
 
 QString getNodeIPV4() {
+#if defined (ENABLE_OXFOLD)
     return myNode.ipV4;
+#else
+    return QString("0.0.0.0");
+#endif
 }
 
 QString getNodeIPV6() {
@@ -197,13 +201,16 @@ void init_bft_env()
     // and init locale DB
 
     // start oxfold service
+#if defined(ENABLE_OXFOLD)
     start_oxfold();
+#endif
 }
 
 void close_bft_env()
 {
+#if defined(ENABLE_OXFOLD)
     stop_oxfold();
-
+#endif
 }
 
 QString converFileSizeToKBMBGB(qint64 filesize)
