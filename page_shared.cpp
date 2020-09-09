@@ -3,12 +3,12 @@
 #include <QResizeEvent>
 #include <QFileDialog>
 #include <QDateTime>
-#include "oxfold_wrapper.h"
 #include <QDebug>
 #include <QJsonObject>
 #include <QJsonDocument>
 #include "sharing_dialog.h"
 #include "encrypt/simple_encrypt.h"
+#include "mytool.h"
 
 Page_shared::Page_shared(QWidget *parent) :
     QWidget(parent),
@@ -68,7 +68,7 @@ void Page_shared::init_table()
                 i->setText(fileInfo.fileName());
             }
             if (col == 2 ) {
-                i->setText(converFileSizeToKBMBGB(fileInfo.size()));
+                i->setText( MyTool::converFileSizeToKBMBGB(fileInfo.size()));
             }
             if (col == 3 ) {
                 i->setText(fileInfo.lastModified().toString("yyyy.MM.dd hh:mm"));
@@ -161,7 +161,7 @@ void Page_shared::on_bt_add_share_file_clicked()
                 i->setText(name);
             }
             if (col == 2 ) {
-                i->setText(converFileSizeToKBMBGB(size));
+                i->setText(MyTool::converFileSizeToKBMBGB(size));
             }
             if (col == 3 ) {
                 i->setText(lastmodified.toString("yyyy.MM.dd hh:mm"));
@@ -207,7 +207,7 @@ QString my_randString(int len)
 // sharing link looks like http://ip:8080/filename.ext
 void Page_shared::on_bt_share_file_clicked()
 {
-    QString host_ip = getNodeIPV4();
+    QString host_ip = MyTool::getNodeIPV4();
     int     port = 8080;
     QString file_name;
     qint64  file_size;

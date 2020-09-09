@@ -6,7 +6,7 @@
 #include "page_downloaded.h"
 #include "page_downloading.h"
 #include <QResizeEvent>
-#include "oxfold_wrapper.h"
+#include "mytool.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -28,22 +28,18 @@ MainWindow::MainWindow(QWidget *parent)
     ui->stackedWidget->addWidget(page4);
 
     //start oxfold network service
-    init_bft_env();
+    MyTool::init_bft_env();
 
     //start http server
-    QString node_ip = getNodeIPV4();
+    QString node_ip = MyTool::getNodeIPV4();
     QString root = QDir::homePath() + "/oxfold/bigfiletool/shared";
-    m_http_server_t = new HTTPThread_server(this);
-    m_http_server_t->init_thread(node_ip, 8080, root);
-    m_http_server_t->start();
+
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
-    m_http_server_t->exit();
-
-    close_bft_env();
+    MyTool::close_bft_env();
 }
 
 void MainWindow::resizeEvent(QResizeEvent *e)

@@ -44,7 +44,7 @@ private slots:
 
 private:
     Ui::Page_downloading *ui;
-    QList<HTTPThread_client*>  m_client_s;
+
 };
 
 #endif // PAGE_DOWNLOADING_H

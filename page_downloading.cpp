@@ -3,13 +3,13 @@
 #include <QResizeEvent>
 #include <QFileDialog>
 #include <QDateTime>
-#include "oxfold_wrapper.h"
 #include <QDebug>
 #include "add_link_dialog.h"
 #include <QJsonDocument>
 #include <QJsonObject>
 #include "http_thread.h"
 #include <QJsonArray>
+#include "mytool.h"
 
 Page_downloading::Page_downloading(QWidget *parent) :
     QWidget(parent),
@@ -82,7 +82,7 @@ void Page_downloading::init_table()
                 i->setText(obj["file_name"].toString());
             }
             if (col == 2 ) {
-                i->setText(converFileSizeToKBMBGB(obj["file_size"].toDouble()));
+                i->setText(MyTool::converFileSizeToKBMBGB(obj["file_size"].toDouble()));
             }
             if (col == 3 ) {
                 i->setText("stopped");
@@ -90,10 +90,10 @@ void Page_downloading::init_table()
             t->setItem(t->rowCount()-1, col, i);
         }
 
-        HTTPThread_client  *hc_thread = new HTTPThread_client(this);
-        hc_thread->init_thread(obj["host_ip"].toString(), obj["host_port"].toInt(), obj["file_name"].toString());
-        connect(hc_thread,SIGNAL(update_thread_status(QString, quint64, quint64)), this, SLOT(update_download_task(QString,quint64, quint64)));
-        this->m_client_s.append(hc_thread);
+//        HTTPThread_client  *hc_thread = new HTTPThread_client(this);
+//        hc_thread->init_thread(obj["host_ip"].toString(), obj["host_port"].toInt(), obj["file_name"].toString());
+//        connect(hc_thread,SIGNAL(update_thread_status(QString, quint64, quint64)), this, SLOT(update_download_task(QString,quint64, quint64)));
+//        this->m_client_s.append(hc_thread);
     }
 }
 
@@ -121,24 +121,24 @@ void Page_downloading::resizeEvent(QResizeEvent *e)
 
 void Page_downloading::on_bt_pause_all_clicked()
 {
-    for (int index=0; index < m_client_s.count(); index++)
-    {
-        HTTPThread_client* hc_thread = m_client_s[index];
-        if (hc_thread->isRunning()) {
-            hc_thread->exit();
-        }
-    }
+//    for (int index=0; index < m_client_s.count(); index++)
+//    {
+//        HTTPThread_client* hc_thread = m_client_s[index];
+//        if (hc_thread->isRunning()) {
+//            hc_thread->exit();
+//        }
+//    }
 }
 
 void Page_downloading::on_bt_start_all_clicked()
 {
-    for (int index=0; index < m_client_s.count(); index++)
-    {
-        HTTPThread_client* hc_thread = m_client_s[index];
-        if (!hc_thread->isRunning()) {
-            hc_thread->start();
-        }
-    }
+//    for (int index=0; index < m_client_s.count(); index++)
+//    {
+//        HTTPThread_client* hc_thread = m_client_s[index];
+//        if (!hc_thread->isRunning()) {
+//            hc_thread->start();
+//        }
+//    }
 }
 
 void Page_downloading::on_bt_delete_clicked()
@@ -188,7 +188,7 @@ void Page_downloading::add_new_download_task(QString data)
                 i->setText(file_name);
             }
             if (col == 2 ) {
-                i->setText(QString("0KB/") + converFileSizeToKBMBGB(file_size));
+                i->setText(QString("0KB/") + MyTool::converFileSizeToKBMBGB(file_size));
             }
             if (col == 3 ) {
                 i->setText(QString("0%"));
@@ -197,11 +197,11 @@ void Page_downloading::add_new_download_task(QString data)
         }
 
         // start dowload http client thread
-        HTTPThread_client *downlaod_client = new HTTPThread_client(this);
-        downlaod_client->init_thread(host_ip, host_port, file_name);
-        connect(downlaod_client,SIGNAL(update_thread_status(QString, quint64, quint64)), this, SLOT(update_download_task(QString,quint64, quint64)));
-        m_client_s.append(downlaod_client);
-        downlaod_client->start();
+//        HTTPThread_client *downlaod_client = new HTTPThread_client(this);
+//        downlaod_client->init_thread(host_ip, host_port, file_name);
+//        connect(downlaod_client,SIGNAL(update_thread_status(QString, quint64, quint64)), this, SLOT(update_download_task(QString,quint64, quint64)));
+//        m_client_s.append(downlaod_client);
+//        downlaod_client->start();
     }
 
 }
