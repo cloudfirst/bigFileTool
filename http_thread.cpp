@@ -2,7 +2,6 @@
 #include "civetweb_main.h"
 #include <QDir>
 #include <QString>
-#include <fstream>
 
 
 using namespace std;
@@ -31,29 +30,32 @@ void HTTPThread_client::init_thread(QString dst_ip, int port, QString url)
 
 void HTTPThread_client::run()
 {
-//    httplib::Client cli(m_dst_ip.toStdString().c_str(), m_port);
-//    ofstream myfile;
-//    QString dst_file = QDir::homePath() + "/oxfold/bigfiletool/downloading/" + m_url + ".downloading";
+    QString dst_file = QDir::homePath() + "/oxfold/bigfiletool/downloading/" + m_url + ".downloading";
+    QByteArray text1 = dst_file.toUtf8();
+    char *dr1 = new char[text1.size() + 1];
+    strcpy(dr1, text1.data());
 
-//    myfile.open (dst_file.toStdString().c_str(), ios::out | ios::app | ios::binary);
+    QString url = "http://" + m_dst_ip + ":8080" +  "/" + m_url;
+    QByteArray text2 = url.toUtf8();
+    char *dr2 = new char[text2.size() + 1];
+    strcpy(dr2, text2.data());
 
-//    QString url = "/" + m_url;
-//    if (auto res = cli.Get(url.toStdString().c_str(),
-//       [&](const char *data, size_t data_length) {
-//           myfile.write(data, data_length);
-//           return true;
-//         },
-//        [&](uint64_t len, uint64_t total) {
-//          qDebug("http client thread: %lld / %lld bytes => %d%% complete\n", len, total, (int)(len*100/total));
-//          emit update_thread_status(m_url, len, total);
-//          return true; // return 'false' if you want to cancel the request.
-//        }))
-//    {
-//        qDebug("status:%d", res->status);
-//        //qDebug("content-type:%s", res->get_header_value("Content-Type"));
-//    } else {
-//        qDebug("error code: %d", res.error());
-//    }
+    qDebug("HTTPThread_client start to download file:%s", url.toStdString().c_str());
+    run_client(dr2, dr1);
+    qDebug("HTTPThread_client finish to download file:%s", url.toStdString().c_str());
+    free(dr1);
+    free(dr2);
+
+    if (1) {
+        // rename and move file to downloaded dir
+        QString old_file = QDir::homePath() + "/oxfold/bigfiletool/downloading/" + m_url + ".downloading";
+        QString new_file = QDir::homePath() + "/oxfold/bigfiletool/downloaded/" + m_url;
+        QFile::rename(old_file, new_file);
+
+        // remove downloading info
+        QString old_info_file = QDir::homePath() + "/oxfold/bigfiletool/downloading/" + m_url + ".info";
+        QFile(old_info_file).remove();
+    }
 }
 
 
@@ -82,7 +84,7 @@ void HTTPThread_server::run()
 {
    char *configuration[4];
    configuration[0] = (char *)"-listening_ports";
-   configuration[1] = "8080";
+   configuration[1] = (char *)"8080";
    configuration[2] = (char *)"-document_root";
 
    QByteArray text = m_root.toUtf8();

@@ -200,6 +200,10 @@ QString my_randString(int len)
     return str;
 }
 
+
+
+
+
 // sharing link looks like http://ip:8080/filename.ext
 void Page_shared::on_bt_share_file_clicked()
 {

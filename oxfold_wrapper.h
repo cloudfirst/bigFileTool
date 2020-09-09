@@ -8,6 +8,8 @@
 
 #include <QDir>
 #include <QString>
+#include <QNetworkInterface>
+#include <QHostAddress>
 
 void init_bft_env();
 void close_bft_env();

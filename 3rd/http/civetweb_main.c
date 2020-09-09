@@ -822,8 +822,7 @@ read_config_file(const char *config_file, char **options)
 static void
 process_command_line_arguments(int argc, char *argv[], char **options)
 {
-    char *p;
-    size_t i;
+    int i;
 
     for (i = 0; i<argc; i += 2)
     {
@@ -1025,8 +1024,7 @@ finished:
 #endif
 
 
-static int
-run_client(const char *url_arg)
+int run_client(char *url_arg, char *myfile)
 {
     /* connection data */
     char *url = sdup(url_arg); /* OOM will cause program to exit */
@@ -1113,6 +1111,8 @@ run_client(const char *url_arg)
         mg_init_library(MG_FEATURES_DEFAULT);
     }
 
+
+
     /* Connect to host */
     conn = mg_connect_client(host, (int)port, is_ssl, ebuf, sizeof(ebuf));
     if (conn) {
@@ -1135,6 +1135,9 @@ run_client(const char *url_arg)
         ret = mg_get_response(conn, ebuf, sizeof(ebuf), 10000);
 
         if (ret >= 0) {
+            /* open file for writing*/
+            FILE *f = fopen(myfile, "ab");
+
             const struct mg_response_info *ri = mg_get_response_info(conn);
 
             fprintf(stdout,
@@ -1145,10 +1148,11 @@ run_client(const char *url_arg)
             /* Respond reader read. Read body (if any) */
             ret = mg_read(conn, buf, sizeof(buf));
             while (ret > 0) {
-                fwrite(buf, 1, (unsigned)ret, stdout);
+                //fwrite(buf, 1, (unsigned)ret, stdout);
+                fwrite(buf, 1, (unsigned)ret, f);
                 ret = mg_read(conn, buf, sizeof(buf));
             }
-
+            fclose(f);
             fprintf(stdout, "Closing connection to %s\n", host);
 
         } else {
@@ -1202,15 +1206,6 @@ start_civetweb(int argc, char *argv[])
     struct mg_callbacks callbacks;
     char *options[2 * MAX_OPTIONS + 1];
     int i;
-
-    /* Client mode */
-    if (argc > 1 && !strcmp(argv[0], "-C")) {
-        if (argc != 2) {
-            show_usage_and_exit(argv[0]);
-        } else {
-            exit(run_client(argv[1]) ? EXIT_SUCCESS : EXIT_FAILURE);
-        }
-    }
 
     /* Initialize options structure */
     memset(options, 0, sizeof(options));

@@ -1,6 +1,8 @@
 #include "oxfold_wrapper.h"
 #include "ZeroTierSockets.h"
 
+
+
 struct Node
 {
     Node() : online(false), joinedAtLeastOneNetwork(false), id(0), nwid(0), ipV4(""),ipV6("") {}
@@ -153,11 +155,21 @@ int stop_oxfold()
     return 0;
 }
 
+QString getHostIPV4()
+{
+    const QHostAddress &localhost = QHostAddress(QHostAddress::LocalHost);
+    for (const QHostAddress &address: QNetworkInterface::allAddresses())
+    {
+        if (address.protocol() == QAbstractSocket::IPv4Protocol && address != localhost)
+             return address.toString();
+    }
+}
+
 QString getNodeIPV4() {
 #if defined (ENABLE_OXFOLD)
     return myNode.ipV4;
 #else
-    return QString("0.0.0.0");
+    return getHostIPV4();
 #endif
 }
 
