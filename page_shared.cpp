@@ -19,14 +19,33 @@ Page_shared::Page_shared(QWidget *parent) :
     ui->bt_share_file->setVisible(false);
 
     this->init_table();
+
+    QStringList args = {"-document_root",
+                        (QDir::homePath() + "/oxfold/bigfiletool/shared").toStdString().c_str()
+                       };
+    this->p_http_server = new QProcess(this);
+
+    QString exe_path;
+#if defined(_WIN32)
+    exe_path = QDir::homePath() + "/oxfold/CivetWeb.exe";
+#else
+    exe_path = QDir::homePath() + "/oxfold/CivetWeb";
+#endif
+    p_http_server->start(exe_path, args);
+    connect(p_http_server, SIGNAL(readyReadStandardOutput()), this, SLOT(rightMessage()) );
+}
+
+void Page_shared::rightMessage()
+{
+    QByteArray strdata = p_http_server->readAllStandardOutput();
+    MyTool::http_server_ip =  QString(strdata);
 }
 
 Page_shared::~Page_shared()
 {
     delete ui;
+    p_http_server->kill();
 }
-
-
 
 void Page_shared::init_table()
 {

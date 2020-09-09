@@ -1,5 +1,6 @@
 #include "mytool.h"
 
+QString MyTool::http_server_ip = "0.0.0.0";
 
 MyTool::MyTool(QObject *parent) : QObject(parent)
 {

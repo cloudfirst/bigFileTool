@@ -17,6 +17,8 @@ public:
     static QString getNodeIPV4();
     static QString converFileSizeToKBMBGB(qint64 filesize);
 
+    static QString http_server_ip;
+
 signals:
 
 };

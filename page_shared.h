@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QTableWidgetItem>
+#include <QProcess>
 
 namespace Ui {
 class Page_shared;
@@ -18,8 +19,12 @@ public:
 
     void init_table();
 
+public slots:
+    void rightMessage();
+
 private:
     Ui::Page_shared *ui;
+    QProcess  *p_http_server;
 
 protected:
     virtual void resizeEvent(QResizeEvent *e) override;
