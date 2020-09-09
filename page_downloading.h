@@ -5,6 +5,7 @@
 #include <QTableWidgetItem>
 #include "http_thread.h"
 #include <QList>
+#include <QProcess>
 
 namespace Ui {
 class Page_downloading;
@@ -44,6 +45,7 @@ private slots:
 
 private:
     Ui::Page_downloading *ui;
+    QList<QProcess*> http_client_array;
 
 };
 

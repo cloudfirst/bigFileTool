@@ -220,13 +220,14 @@ QString my_randString(int len)
 }
 
 
-
-
-
 // sharing link looks like http://ip:8080/filename.ext
 void Page_shared::on_bt_share_file_clicked()
 {
+#if defined (ENABLE_OXFOLD)
+    QString host_ip = MyTool::http_server_ip;
+#else
     QString host_ip = MyTool::getNodeIPV4();
+#endif
     int     port = 8080;
     QString file_name;
     qint64  file_size;

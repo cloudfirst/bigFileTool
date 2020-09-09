@@ -22,6 +22,10 @@ Page_downloading::Page_downloading(QWidget *parent) :
 Page_downloading::~Page_downloading()
 {
     delete ui;
+    for (int i=0; i<this->http_client_array.size(); ++i)
+    {
+        http_client_array.at(i)->kill();
+    }
 }
 
 void Page_downloading::init_table()
@@ -90,10 +94,18 @@ void Page_downloading::init_table()
             t->setItem(t->rowCount()-1, col, i);
         }
 
-//        HTTPThread_client  *hc_thread = new HTTPThread_client(this);
-//        hc_thread->init_thread(obj["host_ip"].toString(), obj["host_port"].toInt(), obj["file_name"].toString());
-//        connect(hc_thread,SIGNAL(update_thread_status(QString, quint64, quint64)), this, SLOT(update_download_task(QString,quint64, quint64)));
-//        this->m_client_s.append(hc_thread);
+        QString url = "http://" + obj["host_ip"].toString() + ":8080" + "/" +obj["file_name"].toString();
+        QStringList args = {"-C", url.toStdString().c_str()};
+        QProcess *p_http_client =  new QProcess(this);
+        QString exe_path;
+        #if defined(_WIN32)
+            exe_path = QDir::homePath() + "/oxfold/CivetWeb.exe";
+        #else
+            exe_path = QDir::homePath() + "/oxfold/CivetWeb";
+        #endif
+        p_http_client->start(exe_path, args);
+        http_client_array.append(p_http_client);
+        //connect(p_http_client, SIGNAL(readyReadStandardOutput()), this, SLOT(rightMessage()) );
     }
 }
 
@@ -121,24 +133,18 @@ void Page_downloading::resizeEvent(QResizeEvent *e)
 
 void Page_downloading::on_bt_pause_all_clicked()
 {
-//    for (int index=0; index < m_client_s.count(); index++)
-//    {
-//        HTTPThread_client* hc_thread = m_client_s[index];
-//        if (hc_thread->isRunning()) {
-//            hc_thread->exit();
-//        }
-//    }
+    for (int i=0; i<this->http_client_array.size(); ++i)
+    {
+        http_client_array.at(i)->kill();
+    }
+    http_client_array.clear();
 }
 
 void Page_downloading::on_bt_start_all_clicked()
 {
-//    for (int index=0; index < m_client_s.count(); index++)
-//    {
-//        HTTPThread_client* hc_thread = m_client_s[index];
-//        if (!hc_thread->isRunning()) {
-//            hc_thread->start();
-//        }
-//    }
+    QTableWidget * t = ui->tableWidget;
+    t->setRowCount(0);
+    init_table();
 }
 
 void Page_downloading::on_bt_delete_clicked()
@@ -196,12 +202,18 @@ void Page_downloading::add_new_download_task(QString data)
             t->setItem(t->rowCount()-1, col, i);
         }
 
-        // start dowload http client thread
-//        HTTPThread_client *downlaod_client = new HTTPThread_client(this);
-//        downlaod_client->init_thread(host_ip, host_port, file_name);
-//        connect(downlaod_client,SIGNAL(update_thread_status(QString, quint64, quint64)), this, SLOT(update_download_task(QString,quint64, quint64)));
-//        m_client_s.append(downlaod_client);
-//        downlaod_client->start();
+        QString url = "http://" + host_ip + ":8080" + "/" + file_name;
+        QStringList args = {"-C", url.toStdString().c_str()};
+        QProcess *p_http_client =  new QProcess(this);
+        QString exe_path;
+        #if defined(_WIN32)
+            exe_path = QDir::homePath() + "/oxfold/CivetWeb.exe";
+        #else
+            exe_path = QDir::homePath() + "/oxfold/CivetWeb";
+        #endif
+        p_http_client->start(exe_path, args);
+        http_client_array.append(p_http_client);
+        //connect(p_http_client, SIGNAL(readyReadStandardOutput()), this, SLOT(rightMessage()) );
     }
 
 }
