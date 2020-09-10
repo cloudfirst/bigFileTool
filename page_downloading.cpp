@@ -11,6 +11,10 @@
 #include <QJsonArray>
 #include "mytool.h"
 
+#if defined(_WIN32)
+#include "Windows.h"
+#endif
+
 Page_downloading::Page_downloading(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::Page_downloading)
@@ -267,16 +271,18 @@ void Page_downloading::On_client_process_finished(QString fname)
     QString old_file = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloading\\" + fname + ".downloading";
     QString new_file = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloaded\\" + fname;
     QString old_info_file = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloading\\" + fname + ".info";
+    BOOL flag = MoveFileExA(
+       old_file.toStdString().c_str(),
+       new_file.toStdString().c_str(),
+       MOVEFILE_COPY_ALLOWED
+    );
 #else
     QString old_file = QDir::homePath() + "/oxfold/bigfiletool/downloading/" + fname + ".downloading";
     QString new_file = QDir::homePath() + "/oxfold/bigfiletool/downloaded/" + fname;
     QString old_info_file = QDir::homePath() + "/oxfold/bigfiletool/downloading/" + fname + ".info";
-#endif
-
     QFile::rename(old_file, new_file);
-
+#endif
     // remove downloading info
-
     QFile(old_info_file).remove();
 
     // remove tableWidget Item in tableWidget
