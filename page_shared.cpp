@@ -10,6 +10,11 @@
 #include "encrypt/simple_encrypt.h"
 #include "mytool.h"
 
+#if defined(_WIN32)
+#include "Windows.h"
+#endif
+
+
 Page_shared::Page_shared(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::Page_shared)
@@ -149,6 +154,24 @@ void Page_shared::on_shared_file_tableWidget_itemClicked(QTableWidgetItem *item)
 
 }
 
+void Page_shared::mklink(QString target, QString link)
+{
+#if defined (_WIN32)
+    QString _target = QDir::toNativeSeparators(target);
+    QString _link   = QDir::toNativeSeparators(link);
+    BOOL fCreatedLink = CreateHardLinkA( _link.toStdString().c_str(),
+                                        _target.toStdString().c_str(),
+                                        NULL ); // reserved, must be NULL
+
+    if ( fCreatedLink == FALSE )
+    {
+        qDebug("create hadr link failed in windows : %s", _target.toStdString().c_str());
+    }
+#else
+    QFile::link(target, link);
+#endif
+}
+
 // the default dir for shared files are located in ~/oxfold/bigfiletool/shared、
 void Page_shared::on_bt_add_share_file_clicked()
 {
@@ -163,8 +186,7 @@ void Page_shared::on_bt_add_share_file_clicked()
         QDateTime   lastmodified = info.lastModified();
 
         //create symlink at ~/oxfold/bigfiletool/shared
-
-        QFile::link(afp, QDir::homePath() + "/oxfold/bigfiletool/shared/" + name);
+        mklink(afp, QDir::homePath() + "/oxfold/bigfiletool/shared/" + name);
 
         //add item to tableWidget
         QTableWidget * t = ui->shared_file_tableWidget;
@@ -201,13 +223,10 @@ void Page_shared::on_bt_add_share_file_clicked()
 qint64 getFileSize(QString shared_file_name)
 {
 #if defined (_WIN32)
-    QString _file_path = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\shared\\" +  shared_file_name;
-    QFileInfo _info(_file_path);
-    const QString file_path = _info.symLinkTarget();
+    QString file_path = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\shared\\" +  shared_file_name;
 #else
     QString file_path = QDir::homePath() + "/oxfold/bigfiletool/shared/" +  shared_file_name;
 #endif
-
     QFileInfo info(file_path);
     return info.size();
 }

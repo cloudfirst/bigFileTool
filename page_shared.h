@@ -18,6 +18,7 @@ public:
     ~Page_shared();
 
     void init_table();
+    void mklink(QString target, QString link);
 
 public slots:
     void rightMessage();

@@ -61,3 +61,6 @@ DISTFILES +=
 
 RESOURCES += \
     res.qrc
+
+
+win32: LIBS += -lkernel32
