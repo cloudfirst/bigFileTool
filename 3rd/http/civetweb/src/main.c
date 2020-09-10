@@ -1089,6 +1089,16 @@ finished:
 #include <_mingw.h>
 #endif
 
+#if defined(_WIN32)
+const wchar_t *GetWC(const char *c)
+{
+    const size_t cSize = strlen(c)+1;
+    wchar_t* wc = (wchar_t*)malloc(cSize*sizeof(wchar_t));
+    mbstowcs (wc, c, cSize);
+
+    return wc;
+}
+#endif
 
 static int
 run_client(const char *url_arg, const char *dst_file_arg)
@@ -1202,7 +1212,6 @@ run_client(const char *url_arg, const char *dst_file_arg)
 		if (ret >= 0) {
 			const struct mg_response_info *ri = mg_get_response_info(conn);
             FILE *f = fopen(dst_file_arg, "ab");
-
 			fprintf(stdout,
 			        "Response info: %i %s\n",
 			        ri->status_code,
@@ -1217,6 +1226,7 @@ run_client(const char *url_arg, const char *dst_file_arg)
 			}
 
 			fprintf(stdout, "Closing connection to %s\n", host);
+            fclose(f);
 
 		} else {
 			/* Server did not reply to HTTP request */
@@ -3117,19 +3127,18 @@ WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR cmdline, int show)
 	return (int)msg.wParam;
 }
 
+#elif defined(USE_COCOA)
 
 /* main() for Windows (Subsystem: Console). */
-int
-main(int argc, char *argv[])
-{
-	(void)argc;
-	(void)argv;
+//int
+//main(int argc, char *argv[])
+//{
+//	(void)argc;
+//	(void)argv;
 
-	return WinMain(0, 0, 0, 0);
-}
+//	return WinMain(0, 0, 0, 0);
+//}
 
-
-#elif defined(USE_COCOA)
 #import <Cocoa/Cocoa.h>
 
 @interface Civetweb : NSObject <NSApplicationDelegate>
@@ -3233,7 +3242,7 @@ main(int argc, char *argv[])
 }
 
 #else
-
+#endif /* _WIN32 */
 
 /* main for Linux (and others) */
 int
@@ -3263,4 +3272,4 @@ main(int argc, char *argv[])
 
 	return EXIT_SUCCESS;
 }
-#endif /* _WIN32 */
+

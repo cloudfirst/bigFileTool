@@ -20,17 +20,22 @@ Page_shared::Page_shared(QWidget *parent) :
 
     this->init_table();
 
-    QStringList args = {"-document_root",
-                        (QDir::homePath() + "/oxfold/bigfiletool/shared").toStdString().c_str()
-                       };
+
     this->p_http_server = new QProcess(this);
 
     QString exe_path;
 #if defined(_WIN32)
-    exe_path = QDir::homePath() + "/oxfold/CivetWeb.exe";
+     exe_path = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\CivetWeb.exe";
+     QStringList args = {"-document_root",
+                         QDir::toNativeSeparators((QDir::homePath()) + "\\oxfold\\bigfiletool\\shared").toStdString().c_str()
+                        };
 #else
     exe_path = QDir::homePath() + "/oxfold/CivetWeb";
+    QStringList args = {"-document_root",
+                        QDir::homePath() + "/oxfold/bigfiletool/shared").toStdString().c_str()
+                       };
 #endif
+
     p_http_server->start(exe_path, args);
     connect(p_http_server, SIGNAL(readyReadStandardOutput()), this, SLOT(rightMessage()) );
 }
@@ -158,6 +163,7 @@ void Page_shared::on_bt_add_share_file_clicked()
         QDateTime   lastmodified = info.lastModified();
 
         //create symlink at ~/oxfold/bigfiletool/shared
+
         QFile::link(afp, QDir::homePath() + "/oxfold/bigfiletool/shared/" + name);
 
         //add item to tableWidget
@@ -194,9 +200,15 @@ void Page_shared::on_bt_add_share_file_clicked()
 
 qint64 getFileSize(QString shared_file_name)
 {
+#if defined (_WIN32)
+    QString _file_path = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\shared\\" +  shared_file_name;
+    QFileInfo _info(_file_path);
+    const QString file_path = _info.symLinkTarget();
+#else
     QString file_path = QDir::homePath() + "/oxfold/bigfiletool/shared/" +  shared_file_name;
-    QFileInfo info(file_path);
+#endif
 
+    QFileInfo info(file_path);
     return info.size();
 }
 

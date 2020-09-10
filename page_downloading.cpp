@@ -38,7 +38,11 @@ void Page_downloading::init_table()
 
     // init data
     int n_cols = 4;
+#if defined(_WIN32)
+     QDir dir1(QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloading\\");
+#else
     QDir dir1(QDir::homePath() + "/oxfold/bigfiletool/downloading/");
+#endif
     QStringList filters;
     filters << "*.info";
     QFileInfoList list = dir1.entryInfoList(filters);
@@ -95,7 +99,11 @@ void Page_downloading::init_table()
         }
 
         QString url = "http://" + obj["host_ip"].toString() + ":8080" + "/" +obj["file_name"].toString();
+#if defined(_WIN32)
+        QString dst_file_name = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloading\\" + obj["file_name"].toString() + ".downloading";
+#else
         QString dst_file_name = QDir::homePath() + "/oxfold/bigfiletool/downloading/" + obj["file_name"].toString() + ".downloading";
+#endif
         QStringList args = {
             "-C",
             url.toStdString().c_str(),
@@ -105,11 +113,11 @@ void Page_downloading::init_table()
 
         QProcess *p_http_client =  new QProcess(this);
         QString exe_path;
-        #if defined(_WIN32)
-            exe_path = QDir::homePath() + "/oxfold/CivetWeb.exe";
-        #else
-            exe_path = QDir::homePath() + "/oxfold/CivetWeb";
-        #endif
+#if defined(_WIN32)
+        exe_path = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\CivetWeb.exe";
+#else
+        exe_path = QDir::homePath() + "/oxfold/CivetWeb";
+#endif
         p_http_client->start(exe_path, args);
         http_client_array.append(p_http_client);
         //connect(p_http_client, SIGNAL(readyReadStandardOutput()), this, SLOT(rightMessage()) );
@@ -218,7 +226,11 @@ void Page_downloading::add_new_download_task(QString data)
         }
 
         QString url = "http://" + host_ip + ":8080" + "/" + file_name;
+#if defined(_WIN32)
+        QString dst_file_name = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloading\\" + file_name + ".downloading";
+#else
         QString dst_file_name = QDir::homePath() + "/oxfold/bigfiletool/downloading/" + file_name + ".downloading";
+#endif
         QStringList args = {
             "-C",
             url.toStdString().c_str(),
@@ -228,11 +240,11 @@ void Page_downloading::add_new_download_task(QString data)
 
         QProcess *p_http_client =  new QProcess(this);
         QString exe_path;
-        #if defined(_WIN32)
-            exe_path = QDir::homePath() + "/oxfold/CivetWeb.exe";
-        #else
+#if defined(_WIN32)
+            exe_path = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\CivetWeb.exe";
+#else
             exe_path = QDir::homePath() + "/oxfold/CivetWeb";
-        #endif
+#endif
         p_http_client->start(exe_path, args);
         http_client_array.append(p_http_client);
         //connect(p_http_client, SIGNAL(readyReadStandardOutput()), this, SLOT(rightMessage()) );
@@ -249,12 +261,20 @@ void Page_downloading::add_new_download_task(QString data)
 
 void Page_downloading::On_client_process_finished(QString fname)
 {
+#if defined(_WIN32)
+    QString old_file = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloading\\" + fname + ".downloading";
+    QString new_file = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloaded\\" + fname;
+    QString old_info_file = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloading\\" + fname + ".info";
+#else
     QString old_file = QDir::homePath() + "/oxfold/bigfiletool/downloading/" + fname + ".downloading";
     QString new_file = QDir::homePath() + "/oxfold/bigfiletool/downloaded/" + fname;
+    QString old_info_file = QDir::homePath() + "/oxfold/bigfiletool/downloading/" + fname + ".info";
+#endif
+
     QFile::rename(old_file, new_file);
 
     // remove downloading info
-    QString old_info_file = QDir::homePath() + "/oxfold/bigfiletool/downloading/" + fname + ".info";
+
     QFile(old_info_file).remove();
 
     // remove tableWidget Item in tableWidget
@@ -264,19 +284,6 @@ void Page_downloading::On_client_process_finished(QString fname)
 void Page_downloading::update_download_task(QString fname,quint64 len, quint64 total)
 {
     qDebug("Page_downloading: %s %lld / %lld bytes => %d%% complete\n", fname.toStdString().c_str(), len, total, (int)(len*100/total));
-    if (len >= total) {
-        qDebug("http client completed.");
-        // rename and move file to downloaded dir
-        QString old_file = QDir::homePath() + "/oxfold/bigfiletool/downloading/" + fname + ".downloading";
-        QString new_file = QDir::homePath() + "/oxfold/bigfiletool/downloaded/" + fname;
-        QFile::rename(old_file, new_file);
-
-        // remove downloading info
-        QString old_info_file = QDir::homePath() + "/oxfold/bigfiletool/downloading/" + fname + ".info";
-        QFile(old_info_file).remove();
-
-        // mark tableWidget Item
-    }
 }
 
 
