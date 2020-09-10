@@ -32,7 +32,7 @@ Page_shared::Page_shared(QWidget *parent) :
 #else
     exe_path = QDir::homePath() + "/oxfold/CivetWeb";
     QStringList args = {"-document_root",
-                        QDir::homePath() + "/oxfold/bigfiletool/shared").toStdString().c_str()
+                        (QDir::homePath() + "/oxfold/bigfiletool/shared").toStdString().c_str(),
                        };
 #endif
 

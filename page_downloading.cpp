@@ -118,6 +118,7 @@ void Page_downloading::init_table()
 #else
         exe_path = QDir::homePath() + "/oxfold/CivetWeb";
 #endif
+        qDebug("%s %s %s %s %s", exe_path.toStdString().c_str(), args[0].toStdString().c_str(), args[1].toStdString().c_str(), args[2].toStdString().c_str(), args[3].toStdString().c_str() );
         p_http_client->start(exe_path, args);
         http_client_array.append(p_http_client);
         //connect(p_http_client, SIGNAL(readyReadStandardOutput()), this, SLOT(rightMessage()) );
@@ -245,6 +246,7 @@ void Page_downloading::add_new_download_task(QString data)
 #else
             exe_path = QDir::homePath() + "/oxfold/CivetWeb";
 #endif
+        qDebug("%s %s %s %s %s", exe_path.toStdString().c_str(), args[0].toStdString().c_str(), args[1].toStdString().c_str(), args[2].toStdString().c_str(), args[3].toStdString().c_str() );
         p_http_client->start(exe_path, args);
         http_client_array.append(p_http_client);
         //connect(p_http_client, SIGNAL(readyReadStandardOutput()), this, SLOT(rightMessage()) );
