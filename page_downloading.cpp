@@ -95,7 +95,14 @@ void Page_downloading::init_table()
         }
 
         QString url = "http://" + obj["host_ip"].toString() + ":8080" + "/" +obj["file_name"].toString();
-        QStringList args = {"-C", url.toStdString().c_str()};
+        QString dst_file_name = QDir::homePath() + "/oxfold/bigfiletool/downloading/" + obj["file_name"].toString() + ".downloading";
+        QStringList args = {
+            "-C",
+            url.toStdString().c_str(),
+            "-D",
+            dst_file_name.toStdString().c_str()
+        };
+
         QProcess *p_http_client =  new QProcess(this);
         QString exe_path;
         #if defined(_WIN32)
@@ -106,6 +113,14 @@ void Page_downloading::init_table()
         p_http_client->start(exe_path, args);
         http_client_array.append(p_http_client);
         //connect(p_http_client, SIGNAL(readyReadStandardOutput()), this, SLOT(rightMessage()) );
+        connect(p_http_client, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+            [=](int exitCode, QProcess::ExitStatus exitStatus)
+        {
+            if (exitStatus == 0) //QProcess::NormalExit
+            {
+                On_client_process_finished(obj["file_name"].toString());
+            }
+        });
     }
 }
 
@@ -203,7 +218,14 @@ void Page_downloading::add_new_download_task(QString data)
         }
 
         QString url = "http://" + host_ip + ":8080" + "/" + file_name;
-        QStringList args = {"-C", url.toStdString().c_str()};
+        QString dst_file_name = QDir::homePath() + "/oxfold/bigfiletool/downloading/" + file_name + ".downloading";
+        QStringList args = {
+            "-C",
+            url.toStdString().c_str(),
+            "-D",
+            dst_file_name.toStdString().c_str()
+        };
+
         QProcess *p_http_client =  new QProcess(this);
         QString exe_path;
         #if defined(_WIN32)
@@ -214,8 +236,29 @@ void Page_downloading::add_new_download_task(QString data)
         p_http_client->start(exe_path, args);
         http_client_array.append(p_http_client);
         //connect(p_http_client, SIGNAL(readyReadStandardOutput()), this, SLOT(rightMessage()) );
+        connect(p_http_client, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+            [=](int exitCode, QProcess::ExitStatus exitStatus)
+        {
+            if (exitStatus == 0) //QProcess::NormalExit
+            {
+                On_client_process_finished(file_name);
+            }
+        });
     }
+}
 
+void Page_downloading::On_client_process_finished(QString fname)
+{
+    QString old_file = QDir::homePath() + "/oxfold/bigfiletool/downloading/" + fname + ".downloading";
+    QString new_file = QDir::homePath() + "/oxfold/bigfiletool/downloaded/" + fname;
+    QFile::rename(old_file, new_file);
+
+    // remove downloading info
+    QString old_info_file = QDir::homePath() + "/oxfold/bigfiletool/downloading/" + fname + ".info";
+    QFile(old_info_file).remove();
+
+    // remove tableWidget Item in tableWidget
+    // to be done.
 }
 
 void Page_downloading::update_download_task(QString fname,quint64 len, quint64 total)

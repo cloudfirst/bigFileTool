@@ -20,6 +20,7 @@ public:
     ~Page_downloading();
 
     void init_table();
+    void On_client_process_finished(QString fname);
 
 protected:
     virtual void resizeEvent(QResizeEvent *e) override;
