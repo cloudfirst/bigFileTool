@@ -85,6 +85,7 @@
 #include <sys/stat.h>
 
 #include "civetweb.h"
+#include "../../../oxfold/include/oxfold_wrapper.h"
 
 #undef printf
 #define printf                                                                 \
@@ -3248,28 +3249,35 @@ main(int argc, char *argv[])
 int
 main(int argc, char *argv[])
 {
-	init_server_name();
-	init_system_info();
-	start_civetweb(argc, argv);
-	fprintf(stdout,
-	        "%s started on port(s) %s with web root [%s]\n",
-	        g_server_name,
-	        mg_get_option(g_ctx, "listening_ports"),
-	        mg_get_option(g_ctx, "document_root"));
+    int ret = start_oxfold();
+    if (ret != 0 ) {
+        fprintf(stdout, "init oxfold environment failed, exit now.");
+        return EXIT_FAILURE;
+    } else {
+        init_server_name();
+        init_system_info();
+        start_civetweb(argc, argv);
+        fprintf(stdout,
+                "%s started on port(s) %s with web root [%s]\n",
+                g_server_name,
+                mg_get_option(g_ctx, "listening_ports"),
+                mg_get_option(g_ctx, "document_root"));
 
-	while (g_exit_flag == 0) {
-		sleep(1);
-	}
+        while (g_exit_flag == 0) {
+            sleep(1);
+        }
 
-	fprintf(stdout,
-	        "Exiting on signal %d, waiting for all threads to finish...",
-	        g_exit_flag);
-	fflush(stdout);
-	stop_civetweb();
-	fprintf(stdout, "%s", " done.\n");
+        fprintf(stdout,
+                "Exiting on signal %d, waiting for all threads to finish...",
+                g_exit_flag);
+        fflush(stdout);
+        stop_civetweb();
+        fprintf(stdout, "%s", " done.\n");
 
-	free_system_info();
+        free_system_info();
+        stop_oxfold();
 
-	return EXIT_SUCCESS;
+        return EXIT_SUCCESS;
+    }
 }
 

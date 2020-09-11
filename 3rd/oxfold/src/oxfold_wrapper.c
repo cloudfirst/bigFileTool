@@ -1,19 +1,27 @@
-#include "oxfold_wrapper.h"
-#include "ZeroTierSockets.h"
-
-
+#include "../../../oxfold/include/oxfold_wrapper.h"
+#include "../../../oxfold/include/ZeroTierSockets.h"
 
 struct Node
 {
-    Node() : online(false), joinedAtLeastOneNetwork(false), id(0), nwid(0), ipV4(""),ipV6("") {}
     bool online;
     bool joinedAtLeastOneNetwork;
     uint64_t id;
     // etc
     uint64_t nwid;
-    QString ipV4;
-    QString ipV6;
+    char ipV4[50];
+    char ipV6[100];
 } myNode;
+
+
+void assign_ipv4(char* ipv4){
+    memset(myNode.ipV4, 0x00, 50);
+    strncpy(myNode.ipV4, ipv4, strlen(ipv4));
+}
+
+void assign_ipv6(char* ipv6){
+    memset(myNode.ipV6, 0x00, 100);
+    strncpy(myNode.ipV6, ipv6, strlen(ipv6));
+}
 
 void myZeroTierEventCallback(void *msgPtr)
 {
@@ -21,46 +29,46 @@ void myZeroTierEventCallback(void *msgPtr)
 
     // Node events
     if (msg->eventCode == ZTS_EVENT_NODE_ONLINE) {
-        qDebug("ZTS_EVENT_NODE_ONLINE --- This node's ID is %llx\n", msg->node->address);
+        printf("ZTS_EVENT_NODE_ONLINE --- This node's ID is %llx\n", msg->node->address);
         myNode.id = msg->node->address;
         myNode.online = true;
     }
     if (msg->eventCode == ZTS_EVENT_NODE_OFFLINE) {
-        qDebug("ZTS_EVENT_NODE_OFFLINE --- Check your physical Internet connection, router, firewall, etc. What ports are you blocking?\n");
+        printf("ZTS_EVENT_NODE_OFFLINE --- Check your physical Internet connection, router, firewall, etc. What ports are you blocking?\n");
         myNode.online = false;
     }
     if (msg->eventCode == ZTS_EVENT_NODE_NORMAL_TERMINATION) {
-        qDebug("ZTS_EVENT_NODE_NORMAL_TERMINATION\n");
+        printf("ZTS_EVENT_NODE_NORMAL_TERMINATION\n");
         myNode.online = false;
     }
 
     // Virtual network events
     if (msg->eventCode == ZTS_EVENT_NETWORK_NOT_FOUND) {
-        qDebug("ZTS_EVENT_NETWORK_NOT_FOUND --- Are you sure %llx is a valid network?\n",
+        printf("ZTS_EVENT_NETWORK_NOT_FOUND --- Are you sure %llx is a valid network?\n",
             msg->network->nwid);
     }
     if (msg->eventCode == ZTS_EVENT_NETWORK_REQ_CONFIG) {
-        qDebug("ZTS_EVENT_NETWORK_REQ_CONFIG --- Requesting config for network %llx, please wait a few seconds...\n",
+        printf("ZTS_EVENT_NETWORK_REQ_CONFIG --- Requesting config for network %llx, please wait a few seconds...\n",
             msg->network->nwid);
     }
     if (msg->eventCode == ZTS_EVENT_NETWORK_ACCESS_DENIED) {
-        qDebug("ZTS_EVENT_NETWORK_ACCESS_DENIED --- Access to virtual network %llx has been denied. Did you authorize the node yet?\n",
+        printf("ZTS_EVENT_NETWORK_ACCESS_DENIED --- Access to virtual network %llx has been denied. Did you authorize the node yet?\n",
             msg->network->nwid);
     }
     if (msg->eventCode == ZTS_EVENT_NETWORK_READY_IP4) {
-        qDebug("ZTS_EVENT_NETWORK_READY_IP4 --- Network config received. IPv4 traffic can now be sent over network %llx\n",
+        printf("ZTS_EVENT_NETWORK_READY_IP4 --- Network config received. IPv4 traffic can now be sent over network %llx\n",
             msg->network->nwid);
         myNode.joinedAtLeastOneNetwork = true;
         myNode.nwid = msg->network->nwid;
     }
     if (msg->eventCode == ZTS_EVENT_NETWORK_READY_IP6) {
-        qDebug("ZTS_EVENT_NETWORK_READY_IP6 --- Network config received. IPv6 traffic can now be sent over network %llx\n",
+        printf("ZTS_EVENT_NETWORK_READY_IP6 --- Network config received. IPv6 traffic can now be sent over network %llx\n",
             msg->network->nwid);
         myNode.joinedAtLeastOneNetwork = true;
         myNode.nwid = msg->network->nwid;
     }
     if (msg->eventCode == ZTS_EVENT_NETWORK_DOWN) {
-        qDebug("ZTS_EVENT_NETWORK_DOWN --- %llx\n", msg->network->nwid);
+        printf("ZTS_EVENT_NETWORK_DOWN --- %llx\n", msg->network->nwid);
     }
 
     // Address events
@@ -68,33 +76,33 @@ void myZeroTierEventCallback(void *msgPtr)
         char ipstr[ZTS_INET_ADDRSTRLEN];
         struct zts_sockaddr_in *in4 = (struct zts_sockaddr_in*)&(msg->addr->addr);
         zts_inet_ntop(ZTS_AF_INET, &(in4->sin_addr), ipstr, ZTS_INET_ADDRSTRLEN);
-        qDebug("ZTS_EVENT_ADDR_NEW_IP4 --- This node's virtual address on network %llx is %s\n",
+        printf("ZTS_EVENT_ADDR_NEW_IP4 --- This node's virtual address on network %llx is %s\n",
             msg->addr->nwid, ipstr);
-        myNode.ipV4 = QString(ipstr);
+        assign_ipv4(ipstr);
     }
     if (msg->eventCode == ZTS_EVENT_ADDR_ADDED_IP6) {
         char ipstr[ZTS_INET6_ADDRSTRLEN];
         struct zts_sockaddr_in6 *in6 = (struct zts_sockaddr_in6*)&(msg->addr->addr);
         zts_inet_ntop(ZTS_AF_INET6, &(in6->sin6_addr), ipstr, ZTS_INET6_ADDRSTRLEN);
-        qDebug("ZTS_EVENT_ADDR_NEW_IP6 --- This node's virtual address on network %llx is %s\n",
+        printf("ZTS_EVENT_ADDR_NEW_IP6 --- This node's virtual address on network %llx is %s\n",
             msg->addr->nwid, ipstr);
-        myNode.ipV6 = QString(ipstr);
+        assign_ipv6(ipstr);
     }
     if (msg->eventCode == ZTS_EVENT_ADDR_REMOVED_IP4) {
         char ipstr[ZTS_INET_ADDRSTRLEN];
         struct zts_sockaddr_in *in4 = (struct zts_sockaddr_in*)&(msg->addr->addr);
         zts_inet_ntop(ZTS_AF_INET, &(in4->sin_addr), ipstr, ZTS_INET_ADDRSTRLEN);
-        qDebug("ZTS_EVENT_ADDR_REMOVED_IP4 --- The virtual address %s for this node on network %llx has been removed.\n",
+        printf("ZTS_EVENT_ADDR_REMOVED_IP4 --- The virtual address %s for this node on network %llx has been removed.\n",
             ipstr, msg->addr->nwid);
-        myNode.ipV4 = QString("");
+        assign_ipv4("");
     }
     if (msg->eventCode == ZTS_EVENT_ADDR_REMOVED_IP6) {
         char ipstr[ZTS_INET6_ADDRSTRLEN];
         struct zts_sockaddr_in6 *in6 = (struct zts_sockaddr_in6*)&(msg->addr->addr);
         zts_inet_ntop(ZTS_AF_INET6, &(in6->sin6_addr), ipstr, ZTS_INET6_ADDRSTRLEN);
-        qDebug("ZTS_EVENT_ADDR_REMOVED_IP6 --- The virtual address %s for this node on network %llx has been removed.\n",
+        printf("ZTS_EVENT_ADDR_REMOVED_IP6 --- The virtual address %s for this node on network %llx has been removed.\n",
             ipstr, msg->addr->nwid);
-        myNode.ipV6 = QString("");
+        assign_ipv6("");
     }
 
     // Peer events
@@ -105,44 +113,58 @@ void myZeroTierEventCallback(void *msgPtr)
             return;
         }
         if (msg->eventCode == ZTS_EVENT_PEER_DIRECT) {
-            //qDebug("ZTS_EVENT_PEER_DIRECT --- A direct path is known for node=%llx\n", msg->peer->address);
+            //printf("ZTS_EVENT_PEER_DIRECT --- A direct path is known for node=%llx\n", msg->peer->address);
         }
         if (msg->eventCode == ZTS_EVENT_PEER_RELAY) {
-            //qDebug("ZTS_EVENT_PEER_RELAY --- No direct path to node=%llx\n", msg->peer->address);
+            //printf("ZTS_EVENT_PEER_RELAY --- No direct path to node=%llx\n", msg->peer->address);
         }
         if (msg->eventCode == ZTS_EVENT_PEER_PATH_DISCOVERED) {
-            //qDebug("ZTS_EVENT_PEER_PATH_DISCOVERED --- A new direct path was discovered for node=%llx\n", msg->peer->address);
+            //printf("ZTS_EVENT_PEER_PATH_DISCOVERED --- A new direct path was discovered for node=%llx\n", msg->peer->address);
         }
         if (msg->eventCode == ZTS_EVENT_PEER_PATH_DEAD) {
-            //qDebug("ZTS_EVENT_PEER_PATH_DEAD --- A direct path has died for node=%llx\n", msg->peer->address);
+            //printf("ZTS_EVENT_PEER_PATH_DEAD --- A direct path has died for node=%llx\n", msg->peer->address);
         }
     }
 }
 
+char* getHomePath()
+{
+    char * value;
+    value = getenv ("HOME");
+    return value;
+}
+
+char* add_char_array(char* str1, char*str2)
+{
+    char * str3 = (char *) malloc(1 + strlen(str1)+ strlen(str2) );
+    strcpy(str3, str1);
+    strcat(str3, str2);
+    return str3;
+}
+
 int start_oxfold()
 {
-
     int ztServicePort = atoi("9994"); // Port ZT uses to send encrypted UDP packets to peers (try something like 9994)
 
     int err = ZTS_ERR_OK;
     zts_allow_network_caching(false);
-    QString home = QDir::homePath() + "/oxfold/bigfiletool/myrouter";
+    char* home = add_char_array(getHomePath(), "/oxfold/bigfiletool/myrouter") ;
 
-    if((err = zts_start(home.toStdString().c_str(), &myZeroTierEventCallback, ztServicePort)) != ZTS_ERR_OK) {
-        qDebug("Unable to start service, error = %d. Exiting.\n", err);
+    if((err = zts_start(home, &myZeroTierEventCallback, ztServicePort)) != ZTS_ERR_OK) {
+        printf("Unable to start service, error = %d. Exiting.\n", err);
         exit(1);
     }
-    qDebug("Waiting for node to come online...\n");
+    printf("Waiting for node to come online...\n");
     while (!myNode.online) { zts_delay_ms(50); }
-    qDebug("This node's identity is stored in %s\n", home.toStdString().c_str());
+    printf("This node's identity is stored in %s\n", home);
 
-    uint64_t nwid = 0xa6f4adb92de77959; //0x8056c2e21c000001;
+    uint64_t nwid = OXFOLD_NWID; //0x8056c2e21c000001;
 
     if((err = zts_join(nwid)) != ZTS_ERR_OK) {
-        qDebug("Unable to join network, error = %d. Exiting.\n", err);
+        printf("Unable to join network, error = %d. Exiting.\n", err);
         exit(1);
     }
-    qDebug("Joining network %llx\n", nwid);
+    printf("Joining network %llx\n", nwid);
     while (!myNode.joinedAtLeastOneNetwork) { zts_delay_ms(50); }
 
     // Shut down service and stack threads
@@ -155,96 +177,20 @@ int stop_oxfold()
     return 0;
 }
 
-QString getHostIPV4()
+char* getHostIPV4()
 {
-    const QHostAddress &localhost = QHostAddress(QHostAddress::LocalHost);
-    for (const QHostAddress &address: QNetworkInterface::allAddresses())
-    {
-        if (address.protocol() == QAbstractSocket::IPv4Protocol && address != localhost)
-             return address.toString();
-    }
+
 }
 
-QString getNodeIPV4() {
-#if defined (ENABLE_OXFOLD)
+char* getNodeIPV4() {
     return myNode.ipV4;
-#else
-    return getHostIPV4();
-#endif
 }
 
-QString getNodeIPV6() {
+char* getNodeIPV6() {
     return myNode.ipV6;
 }
 
 uint64_t getNodeNWID()
 {
     return myNode.nwid;
-}
-
-void init_bft_env()
-{
-    //create directories at home dir
-    // ~/oxfold/bigfiletool/shared
-    // ~/oxfold/bigfiletool/downloaded
-    // ~/oxfold/bigfiletool/downloading
-    QString home = QDir::homePath();
-    QDir dir1(QDir::homePath() + "/oxfold/bigfiletool/shared");
-    if (!dir1.exists())
-    {
-        dir1.mkpath(QDir::homePath() + "/oxfold/bigfiletool/shared");
-    }
-    QDir dir2(QDir::homePath() + "/oxfold/bigfiletool/downloaded");
-    if (!dir2.exists())
-    {
-        dir2.mkpath(QDir::homePath() + "/oxfold/bigfiletool/downloaded");
-    }
-    QDir dir3(QDir::homePath() + "/oxfold/bigfiletool/downloading");
-    if (!dir3.exists())
-    {
-        dir3.mkpath(QDir::homePath() + "/oxfold/bigfiletool/downloading");
-    }
-    QDir dir4(QDir::homePath() + "/oxfold/bigfiletool/myrouter");
-    if (!dir4.exists())
-    {
-        dir4.mkpath(QDir::homePath() + "/oxfold/bigfiletool/myrouter");
-    }
-
-    // and init locale DB
-
-    // start oxfold service
-#if defined(ENABLE_OXFOLD)
-    start_oxfold();
-#endif
-}
-
-void close_bft_env()
-{
-#if defined(ENABLE_OXFOLD)
-    stop_oxfold();
-#endif
-}
-
-QString converFileSizeToKBMBGB(qint64 filesize)
-{
-    QStringList units;
-    units << "B" << "KB" << "MB" << "GB" << "TB" << "PB";
-    double mod  = 1024.0;
-    double size = filesize;
-    //qDebug() << size;
-    int i = 0;
-    long rest = 0;
-    while (size >= mod && i < units.count()-1 )
-    {
-        rest= (long)size % (long)mod ;
-        size /= mod;
-        i++;
-    }
-    QString szResult = QString::number(floor(size));
-    if( rest > 0)
-    {
-       szResult += QString(".") + QString::number(rest).left(2);
-    }
-    szResult += units[i];
-    return  szResult;
 }

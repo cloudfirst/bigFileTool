@@ -370,7 +370,7 @@ __cyg_profile_func_exit(void *this_fn, void *call_site)
 #include <sys/errno.h>
 #include <sys/time.h>
 
-#include "ZeroTierSockets.h"
+#include "../../../oxfold/include/ZeroTierSockets.h"
 
 /* clock_gettime is not implemented on OSX prior to 10.12 */
 static int

@@ -6,6 +6,7 @@ CONFIG -= qt
 DEFINES += MG_EXPERIMENTAL_INTERFACES
 
 SOURCES += \
+    ../../../oxfold/src/oxfold_wrapper.c \
     ../src/md5.inl \
     ../src/sha1.inl \
     ../src/handle_form.inl \
@@ -21,10 +22,12 @@ SOURCES += \
 #qtcAddDeployment()
 
 HEADERS += \
+    ../../../oxfold/include/ZeroTierSockets.h \
+    ../../../oxfold/include/oxfold_wrapper.h \
     ../include/civetweb.h
 
 INCLUDEPATH +=  \
-    ../include/
+    ../include/  \
 
 win32 {
 LIBS += -lws2_32 -lComdlg32 -lUser32 -lShell32 -lAdvapi32
@@ -41,18 +44,18 @@ DEFINES += USE_SERVER_STATS
 #
 #DEFINES += DEBUG
 
-linux {
-INCLUDEPATH +=  \
-    ../src/third_party/ \
-    ../src/third_party/lua-5.2.4/src
+#linux {
+#INCLUDEPATH +=  \
+#    ../src/third_party/ \
+#    ../src/third_party/lua-5.2.4/src
 
-DEFINES += USE_LUA
-DEFINES += USE_LUA_SHARED
-LIBS += -llua5.2
+#DEFINES += USE_LUA
+#DEFINES += USE_LUA_SHARED
+#LIBS += -llua5.2
 
-DEFINES += USE_ZLIB
-LIBS += -lz
-}
+#DEFINES += USE_ZLIB
+#LIBS += -lz
+#}
 
 #To build with duktape support:
 #
@@ -60,3 +63,8 @@ LIBS += -lz
 #    ../src/third_party/duktape-1.8.0/src
 #
 #DEFINES += USE_DUKTAPE
+
+macx {
+    LIBS += -L$$PWD/../../../oxfold/lib/macos-x86_64/ -lzt
+    DEPENDPATH += $$PWD/../../../oxfold/lib/macos-x86_64
+}

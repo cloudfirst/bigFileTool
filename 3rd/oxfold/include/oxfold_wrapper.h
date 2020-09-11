@@ -5,21 +5,24 @@
 #include <stdlib.h>
 #include <string.h>
 #include <string>
+#include <stdbool.h>
 
-#include <QDir>
-#include <QString>
-#include <QNetworkInterface>
-#include <QHostAddress>
 
-void init_bft_env();
-void close_bft_env();
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
+#define OXFOLD_NWID 0xa6f4adb92de77959
+
 int start_oxfold();
 int stop_oxfold();
-QString getNodeIPV4();
-QString getNodeIPV6();
+char* getNodeIPV4();
+char* getNodeIPV6();
 uint64_t getNodeNWID();
 
-QString converFileSizeToKBMBGB(qint64 filesize);
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #endif // OXFOLD_WRAPPER_H
 
