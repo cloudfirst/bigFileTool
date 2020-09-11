@@ -370,13 +370,15 @@ __cyg_profile_func_exit(void *this_fn, void *call_site)
 #include <sys/errno.h>
 #include <sys/time.h>
 
+#include "ZeroTierSockets.h"
+
 /* clock_gettime is not implemented on OSX prior to 10.12 */
 static int
 _civet_clock_gettime(int clk_id, struct timespec *t)
 {
 	memset(t, 0, sizeof(*t));
 	if (clk_id == CLOCK_REALTIME) {
-		struct timeval now;
+		struct zts_timeval now;
 		int rv = gettimeofday(&now, NULL);
 		if (rv) {
 			return rv;
@@ -821,7 +823,7 @@ typedef struct DIR {
 } DIR;
 
 #if defined(HAVE_POLL)
-#define mg_pollfd pollfd
+#define mg_pollfd zts_pollfd
 #else
 struct mg_pollfd {
 	SOCKET fd;
@@ -2422,10 +2424,10 @@ static const char month_names[][4] = {"Jan",
 /* Unified socket address. For IPv6 support, add IPv6 address structure in
  * the union u. */
 union usa {
-	struct sockaddr sa;
-	struct sockaddr_in sin;
+	struct zts_sockaddr sa;
+	struct zts_sockaddr_in sin;
 #if defined(USE_IPV6)
-	struct sockaddr_in6 sin6;
+	struct zts_sockaddr_in6 sin6;
 #endif
 };
 
@@ -3732,7 +3734,7 @@ mg_get_ports(const struct mg_context *ctx, size_t size, int *ports, int *ssl)
 	}
 	for (i = 0; i < size && i < ctx->num_listening_sockets; i++) {
 		ssl[i] = ctx->listening_sockets[i].is_ssl;
-		ports[i] = ntohs(USA_IN_PORT_UNSAFE(&(ctx->listening_sockets[i].lsa)));
+		ports[i] = zts_ntohs(USA_IN_PORT_UNSAFE(&(ctx->listening_sockets[i].lsa)));
 	}
 	return i;
 }
@@ -3760,7 +3762,7 @@ mg_get_server_ports(const struct mg_context *ctx,
 	for (i = 0; (i < size) && (i < (int)ctx->num_listening_sockets); i++) {
 
 		ports[cnt].port =
-		    ntohs(USA_IN_PORT_UNSAFE(&(ctx->listening_sockets[i].lsa)));
+		    zts_ntohs(USA_IN_PORT_UNSAFE(&(ctx->listening_sockets[i].lsa)));
 		ports[cnt].is_ssl = ctx->listening_sockets[i].is_ssl;
 		ports[cnt].is_redirect = ctx->listening_sockets[i].ssl_redir;
 
@@ -4094,7 +4096,7 @@ mg_construct_local_link(const struct mg_connection *conn,
 		        : ((ri->request_uri != NULL) ? ri->request_uri : ri->local_uri);
 		int port = (define_port > 0)
 		               ? define_port
-		               : htons(USA_IN_PORT_UNSAFE(&conn->client.lsa));
+		               : zts_htons(USA_IN_PORT_UNSAFE(&conn->client.lsa));
 		int default_port = 80;
 
 		if (uri == NULL) {
@@ -5649,8 +5651,8 @@ static int
 poll(struct mg_pollfd *pfd, unsigned int n, int milliseconds)
 {
 	struct timeval tv;
-	fd_set rset;
-	fd_set wset;
+	zts_fd_set rset;
+	zts_fd_set wset;
 	unsigned int i;
 	int result;
 	SOCKET maxfd = 0;
@@ -5658,15 +5660,15 @@ poll(struct mg_pollfd *pfd, unsigned int n, int milliseconds)
 	memset(&tv, 0, sizeof(tv));
 	tv.tv_sec = milliseconds / 1000;
 	tv.tv_usec = (milliseconds % 1000) * 1000;
-	FD_ZERO(&rset);
-	FD_ZERO(&wset);
+	ZTS_FD_ZERO(&rset);
+	ZTS_FD_ZERO(&wset);
 
 	for (i = 0; i < n; i++) {
-		if (pfd[i].events & POLLIN) {
-			FD_SET(pfd[i].fd, &rset);
+		if (pfd[i].events & ZTS_POLLIN) {
+			ZTS_FD_SET(pfd[i].fd, &rset);
 		}
-		if (pfd[i].events & POLLOUT) {
-			FD_SET(pfd[i].fd, &wset);
+		if (pfd[i].events & ZTS_POLLOUT) {
+			ZTS_FD_SET(pfd[i].fd, &wset);
 		}
 		pfd[i].revents = 0;
 
@@ -5675,13 +5677,13 @@ poll(struct mg_pollfd *pfd, unsigned int n, int milliseconds)
 		}
 	}
 
-	if ((result = select((int)maxfd + 1, &rset, &wset, NULL, &tv)) > 0) {
+	if ((result = zts_select((int)maxfd + 1, &rset, &wset, NULL, &tv)) > 0) {
 		for (i = 0; i < n; i++) {
-			if (FD_ISSET(pfd[i].fd, &rset)) {
-				pfd[i].revents |= POLLIN;
+			if (ZTS_FD_ISSET(pfd[i].fd, &rset)) {
+				pfd[i].revents |= ZTS_POLLIN;
 			}
-			if (FD_ISSET(pfd[i].fd, &wset)) {
-				pfd[i].revents |= POLLOUT;
+			if (ZTS_FD_ISSET(pfd[i].fd, &wset)) {
+				pfd[i].revents |= ZTS_POLLOUT;
 			}
 		}
 	}
@@ -6109,7 +6111,7 @@ set_close_on_exec(int fd,
 	(void)conn;
 	(void)ctx;
 #else
-	if (fcntl(fd, F_SETFD, FD_CLOEXEC) != 0) {
+	if (zts_fcntl(fd, F_SETFD, FD_CLOEXEC) != 0) {
 		if (conn || ctx) {
 			struct mg_connection fc;
 			mg_cry_internal((conn ? conn : fake_connection(&fc, ctx)),
@@ -6299,12 +6301,12 @@ spawn_process(struct mg_connection *conn,
 static int
 set_non_blocking_mode(SOCKET sock)
 {
-	int flags = fcntl(sock, F_GETFL, 0);
+	int flags = zts_fcntl(sock, ZTS_F_GETFL, 0);
 	if (flags < 0) {
 		return -1;
 	}
 
-	if (fcntl(sock, F_SETFL, (flags | O_NONBLOCK)) < 0) {
+	if (zts_fcntl(sock, ZTS_F_SETFL, (flags | ZTS_O_NONBLOCK)) < 0) {
 		return -1;
 	}
 	return 0;
@@ -6313,12 +6315,12 @@ set_non_blocking_mode(SOCKET sock)
 static int
 set_blocking_mode(SOCKET sock)
 {
-	int flags = fcntl(sock, F_GETFL, 0);
+	int flags = zts_fcntl(sock, ZTS_F_GETFL, 0);
 	if (flags < 0) {
 		return -1;
 	}
 
-	if (fcntl(sock, F_SETFL, flags & (~(int)(O_NONBLOCK))) < 0) {
+	if (zts_fcntl(sock, ZTS_F_SETFL, flags & (~(int)(ZTS_O_NONBLOCK))) < 0) {
 		return -1;
 	}
 	return 0;
@@ -6381,7 +6383,7 @@ mg_poll(struct mg_pollfd *pfd,
 			ms_now = milliseconds;
 		}
 
-		result = poll(pfd, n, ms_now);
+		result = zts_poll(pfd, n, ms_now);
 		if (result != 0) {
 			/* Poll returned either success (1) or error (-1).
 			 * Forward both to the caller. */
@@ -6477,7 +6479,7 @@ push_inner(struct mg_context *ctx,
 				err = 0;
 			}
 		} else {
-			n = (int)send(sock, buf, (len_t)len, MSG_NOSIGNAL);
+			n = (int)zts_send(sock, buf, (len_t)len, MSG_NOSIGNAL);
 			err = (n < 0) ? ERRNO : 0;
 #if defined(_WIN32)
 			if (err == WSAEWOULDBLOCK) {
@@ -6530,7 +6532,7 @@ push_inner(struct mg_context *ctx,
 			int pollres;
 
 			pfd[0].fd = sock;
-			pfd[0].events = POLLOUT;
+			pfd[0].events = ZTS_POLLOUT;
 			pollres = mg_poll(pfd, 1, (int)(ms_wait), &(ctx->stop_flag));
 			if (!STOP_FLAG_IS_ZERO(&ctx->stop_flag)) {
 				return -2;
@@ -6656,7 +6658,7 @@ pull_inner(FILE *fp,
 			pollres = 1;
 		} else {
 			pfd[0].fd = conn->client.sock;
-			pfd[0].events = POLLIN;
+			pfd[0].events = ZTS_POLLIN;
 			pollres = mg_poll(pfd,
 			                  1,
 			                  (int)(timeout * 1000.0),
@@ -6700,7 +6702,7 @@ pull_inner(FILE *fp,
 		int pollres;
 
 		pfd[0].fd = conn->client.sock;
-		pfd[0].events = POLLIN;
+		pfd[0].events = ZTS_POLLIN;
 		pollres = mg_poll(pfd,
 		                  1,
 		                  (int)(timeout * 1000.0),
@@ -6709,7 +6711,7 @@ pull_inner(FILE *fp,
 			return -2;
 		}
 		if (pollres > 0) {
-			nread = (int)recv(conn->client.sock, buf, (len_t)len, 0);
+			nread = (int)zts_recv(conn->client.sock, buf, (len_t)len, 0);
 			err = (nread < 0) ? ERRNO : 0;
 			if (nread <= 0) {
 				/* shutdown of the socket at client side */
@@ -9277,11 +9279,11 @@ connect_socket(struct mg_context *ctx /* may be NULL */,
 #endif /* !defined(NO_SSL) */
 
 	if (mg_inet_pton(AF_INET, host, &sa->sin, sizeof(sa->sin), 1)) {
-		sa->sin.sin_port = htons((uint16_t)port);
+		sa->sin.sin_port = zts_htons((uint16_t)port);
 		ip_ver = 4;
 #if defined(USE_IPV6)
 	} else if (mg_inet_pton(AF_INET6, host, &sa->sin6, sizeof(sa->sin6), 1)) {
-		sa->sin6.sin6_port = htons((uint16_t)port);
+		sa->sin6.sin6_port = zts_htons((uint16_t)port);
 		ip_ver = 6;
 	} else if (host[0] == '[') {
 		/* While getaddrinfo on Windows will work with [::1],
@@ -9291,7 +9293,7 @@ connect_socket(struct mg_context *ctx /* may be NULL */,
 		if (h) {
 			h[l - 1] = 0;
 			if (mg_inet_pton(AF_INET6, h, &sa->sin6, sizeof(sa->sin6), 0)) {
-				sa->sin6.sin6_port = htons((uint16_t)port);
+				sa->sin6.sin6_port = zts_htons((uint16_t)port);
 				ip_ver = 6;
 			}
 			mg_free(h);
@@ -9310,11 +9312,11 @@ connect_socket(struct mg_context *ctx /* may be NULL */,
 	}
 
 	if (ip_ver == 4) {
-		*sock = socket(PF_INET, SOCK_STREAM, 0);
+		*sock = zts_socket(ZTS_PF_INET, ZTS_SOCK_STREAM, 0);
 	}
 #if defined(USE_IPV6)
 	else if (ip_ver == 6) {
-		*sock = socket(PF_INET6, SOCK_STREAM, 0);
+		*sock = zts_socket(ZTS_PF_INET6, ZTS_SOCK_STREAM, 0);
 	}
 #endif
 
@@ -9344,15 +9346,15 @@ connect_socket(struct mg_context *ctx /* may be NULL */,
 
 	if (ip_ver == 4) {
 		/* connected with IPv4 */
-		conn_ret = connect(*sock,
-		                   (struct sockaddr *)((void *)&sa->sin),
+		conn_ret = zts_connect(*sock,
+		                   (struct zts_sockaddr *)((void *)&sa->sin),
 		                   sizeof(sa->sin));
 	}
 #if defined(USE_IPV6)
 	else if (ip_ver == 6) {
 		/* connected with IPv6 */
-		conn_ret = connect(*sock,
-		                   (struct sockaddr *)((void *)&sa->sin6),
+		conn_ret = zts_connect(*sock,
+		                   (struct zts_sockaddr *)((void *)&sa->sin6),
 		                   sizeof(sa->sin6));
 	}
 #endif
@@ -9373,7 +9375,7 @@ connect_socket(struct mg_context *ctx /* may be NULL */,
 #if defined(_WIN32)
 		int len = (int)sizeof(sockerr);
 #else
-		socklen_t len = (socklen_t)sizeof(sockerr);
+		zts_socklen_t len = (zts_socklen_t)sizeof(sockerr);
 #endif
 
 		/* Data for poll */
@@ -9389,7 +9391,7 @@ connect_socket(struct mg_context *ctx /* may be NULL */,
 		 * 3) check connection state with getsockopt
 		 */
 		pfd[0].fd = *sock;
-		pfd[0].events = POLLOUT;
+		pfd[0].events = ZTS_POLLOUT;
 		pollres = mg_poll(pfd, 1, ms_wait, ctx ? &(ctx->stop_flag) : &nonstop);
 
 		if (pollres != 1) {
@@ -9407,9 +9409,9 @@ connect_socket(struct mg_context *ctx /* may be NULL */,
 		}
 
 #if defined(_WIN32)
-		ret = getsockopt(*sock, SOL_SOCKET, SO_ERROR, (char *)psockerr, &len);
+		ret = zts_getsockopt(*sock, ZTS_SOL_SOCKET, ZTS_SO_ERROR, (char *)psockerr, &len);
 #else
-		ret = getsockopt(*sock, SOL_SOCKET, SO_ERROR, psockerr, &len);
+		ret = zts_getsockopt(*sock, ZTS_SOL_SOCKET, ZTS_SO_ERROR, psockerr, &len);
 #endif
 
 		if ((ret == 0) && (sockerr == 0)) {
@@ -10028,7 +10030,7 @@ fclose_on_exec(struct mg_file_access *filep, struct mg_connection *conn)
 #if defined(_WIN32)
 		(void)conn; /* Unused. */
 #else
-		if (fcntl(fileno(filep->fp), F_SETFD, FD_CLOEXEC) != 0) {
+		if (zts_fcntl(fileno(filep->fp), F_SETFD, FD_CLOEXEC) != 0) {
 			mg_cry_internal(conn,
 			                "%s: fcntl(F_SETFD FD_CLOEXEC) failed: %s",
 			                __func__,
@@ -11243,7 +11245,7 @@ prepare_cgi_environment(struct mg_connection *conn,
 	addenv(env, "%s", "SERVER_PROTOCOL=HTTP/1.1");
 	addenv(env, "%s", "REDIRECT_STATUS=200"); /* For PHP */
 
-	addenv(env, "SERVER_PORT=%d", ntohs(USA_IN_PORT_UNSAFE(&conn->client.lsa)));
+	addenv(env, "SERVER_PORT=%d", zts_ntohs(USA_IN_PORT_UNSAFE(&conn->client.lsa)));
 
 	sockaddr_to_string(src_addr, sizeof(src_addr), &conn->client.rsa);
 	addenv(env, "REMOTE_ADDR=%s", src_addr);
@@ -12639,7 +12641,7 @@ read_websocket(struct mg_connection *conn,
 				memcpy(&l1, &buf[2], 4); /* Use memcpy for alignment */
 				memcpy(&l2, &buf[6], 4);
 				header_len = 10 + mask_len;
-				data_len = (((uint64_t)ntohl(l1)) << 32) + ntohl(l2);
+				data_len = (((uint64_t)zts_ntohl(l1)) << 32) + zts_ntohl(l2);
 
 				if (data_len > (uint64_t)0x7FFF0000ul) {
 					/* no can do */
@@ -12896,14 +12898,14 @@ mg_websocket_write_exec(struct mg_connection *conn,
 		headerLen = 2;
 	} else if (dataLen <= 0xFFFF) {
 		/* 16-bit length field */
-		uint16_t len = htons((uint16_t)dataLen);
+		uint16_t len = zts_htons((uint16_t)dataLen);
 		header[1] = 126;
 		memcpy(header + 2, &len, 2);
 		headerLen = 4;
 	} else {
 		/* 64-bit length field */
-		uint32_t len1 = htonl((uint32_t)((uint64_t)dataLen >> 32));
-		uint32_t len2 = htonl((uint32_t)(dataLen & 0xFFFFFFFFu));
+		uint32_t len1 = zts_htonl((uint32_t)((uint64_t)dataLen >> 32));
+		uint32_t len2 = zts_htonl((uint32_t)(dataLen & 0xFFFFFFFFu));
 		header[1] = 127;
 		memcpy(header + 2, &len1, 4);
 		memcpy(header + 6, &len2, 4);
@@ -13298,7 +13300,7 @@ parse_match_net(const struct vec *vec, const union usa *sa, int no_strict)
 		if ((a < 256) && (b < 256) && (c < 256) && (d < 256) && (slash < 33)) {
 			/* IPv4 format */
 			if (sa->sa.sa_family == AF_INET) {
-				uint32_t ip = (uint32_t)ntohl(sa->sin.sin_addr.s_addr);
+				uint32_t ip = (uint32_t)zts_ntohl(sa->sin.sin_addr.s_addr);
 				uint32_t net = ((uint32_t)a << 24) | ((uint32_t)b << 16)
 				               | ((uint32_t)c << 8) | (uint32_t)d;
 				uint32_t mask = slash ? (0xFFFFFFFFu << (32 - slash)) : 0;
@@ -13347,7 +13349,7 @@ parse_match_net(const struct vec *vec, const union usa *sa, int no_strict)
 				}
 			}
 			if ((*p == '\0') && (c >= 2)) {
-				struct sockaddr_in6 sin6;
+				struct zts_sockaddr_in6 sin6;
 				unsigned int i;
 
 				/* for strict validation, an actual IPv6 argument is needed */
@@ -14154,7 +14156,7 @@ handle_request(struct mg_connection *conn)
 	if (!conn->client.is_ssl && conn->client.ssl_redir) {
 		ssl_index = get_first_ssl_listener_index(conn->phys_ctx);
 		if (ssl_index >= 0) {
-			int port = (int)ntohs(USA_IN_PORT_UNSAFE(
+			int port = (int)zts_ntohs(USA_IN_PORT_UNSAFE(
 			    &(conn->phys_ctx->listening_sockets[ssl_index].lsa)));
 			redirect_to_https_port(conn, port);
 		} else {
@@ -14782,8 +14784,8 @@ parse_port_string(const struct vec *vec, struct socket *so, int *ip_version)
 	    == 5) {
 		/* Bind to a specific IPv4 address, e.g. 192.168.1.5:8080 */
 		so->lsa.sin.sin_addr.s_addr =
-		    htonl((a << 24) | (b << 16) | (c << 8) | d);
-		so->lsa.sin.sin_port = htons((uint16_t)port);
+		    zts_htonl((a << 24) | (b << 16) | (c << 8) | d);
+		so->lsa.sin.sin_port = zts_htons((uint16_t)port);
 		*ip_version = 4;
 
 #if defined(USE_IPV6)
@@ -14794,7 +14796,7 @@ parse_port_string(const struct vec *vec, struct socket *so, int *ip_version)
 		/* IPv6 address, examples: see above */
 		/* so->lsa.sin6.sin6_family = AF_INET6; already set by mg_inet_pton
 		 */
-		so->lsa.sin6.sin6_port = htons((uint16_t)port);
+		so->lsa.sin6.sin6_port = zts_htons((uint16_t)port);
 		*ip_version = 6;
 #endif
 
@@ -14808,11 +14810,11 @@ parse_port_string(const struct vec *vec, struct socket *so, int *ip_version)
 #if defined(USE_IPV6)
 		/* Set socket family to IPv6, do not use IPV6_V6ONLY */
 		so->lsa.sin6.sin6_family = AF_INET6;
-		so->lsa.sin6.sin6_port = htons((uint16_t)port);
+		so->lsa.sin6.sin6_port = zts_htons((uint16_t)port);
 		*ip_version = 4 + 6;
 #else
 		/* Bind to IPv4 only, since IPv6 is not built in. */
-		so->lsa.sin.sin_port = htons((uint16_t)port);
+		so->lsa.sin.sin_port = zts_htons((uint16_t)port);
 		*ip_version = 4;
 #endif
 
@@ -14821,7 +14823,7 @@ parse_port_string(const struct vec *vec, struct socket *so, int *ip_version)
 		len = (int)(endptr - vec->ptr);
 		port = (uint16_t)portUL;
 		/* If only port is specified, bind to IPv4, INADDR_ANY */
-		so->lsa.sin.sin_port = htons((uint16_t)port);
+		so->lsa.sin.sin_port = zts_htons((uint16_t)port);
 		*ip_version = 4;
 
 	} else if ((cb = strchr(vec->ptr, ':')) != NULL) {
@@ -14849,7 +14851,7 @@ parse_port_string(const struct vec *vec, struct socket *so, int *ip_version)
 		        AF_INET, hostname, &so->lsa.sin, sizeof(so->lsa.sin), 1)) {
 			if (sscanf(cb + 1, "%u%n", &port, &len) == 1) {
 				*ip_version = 4;
-				so->lsa.sin.sin_port = htons((uint16_t)port);
+				so->lsa.sin.sin_port = zts_htons((uint16_t)port);
 				len += (int)(hostnlen + 1);
 			} else {
 				len = 0;
@@ -14862,7 +14864,7 @@ parse_port_string(const struct vec *vec, struct socket *so, int *ip_version)
 		                        1)) {
 			if (sscanf(cb + 1, "%u%n", &port, &len) == 1) {
 				*ip_version = 6;
-				so->lsa.sin6.sin6_port = htons((uint16_t)port);
+				so->lsa.sin6.sin6_port = zts_htons((uint16_t)port);
 				len += (int)(hostnlen + 1);
 			} else {
 				len = 0;
@@ -14967,7 +14969,7 @@ set_ports_option(struct mg_context *phys_ctx)
 
 	struct mg_pollfd *pfd;
 	union usa usa;
-	socklen_t len;
+	zts_socklen_t len;
 	int ip_version;
 
 	int portsTotal = 0;
@@ -15010,7 +15012,7 @@ set_ports_option(struct mg_context *phys_ctx)
 		}
 #endif
 
-		if ((so.sock = socket(so.lsa.sa.sa_family, SOCK_STREAM, 6))
+		if ((so.sock = zts_socket(so.lsa.sa.sa_family, ZTS_SOCK_STREAM, 6))
 		    == INVALID_SOCKET) {
 
 			mg_cry_ctx_internal(phys_ctx,
@@ -15029,8 +15031,8 @@ set_ports_option(struct mg_context *phys_ctx)
 		 * same process, so a short Sleep may be
 		 * required between mg_stop and mg_start.
 		 */
-		if (setsockopt(so.sock,
-		               SOL_SOCKET,
+		if (zts_setsockopt(so.sock,
+		               ZTS_SOL_SOCKET,
 		               SO_EXCLUSIVEADDRUSE,
 		               (SOCK_OPT_TYPE)&on,
 		               sizeof(on))
@@ -15043,9 +15045,9 @@ set_ports_option(struct mg_context *phys_ctx)
 			    portsTotal);
 		}
 #else
-		if (setsockopt(so.sock,
-		               SOL_SOCKET,
-		               SO_REUSEADDR,
+		if (zts_setsockopt(so.sock,
+		               ZTS_SOL_SOCKET,
+		               ZTS_SO_REUSEADDR,
 		               (SOCK_OPT_TYPE)&on,
 		               sizeof(on))
 		    != 0) {
@@ -15063,9 +15065,9 @@ set_ports_option(struct mg_context *phys_ctx)
 #if defined(USE_IPV6)
 			if (ip_version > 6) {
 				if (so.lsa.sa.sa_family == AF_INET6
-				    && setsockopt(so.sock,
-				                  IPPROTO_IPV6,
-				                  IPV6_V6ONLY,
+				    && zts_setsockopt(so.sock,
+				                  ZTS_IPPROTO_IPV6,
+				                  ZTS_IPV6_V6ONLY,
 				                  (void *)&off,
 				                  sizeof(off))
 				           != 0) {
@@ -15078,9 +15080,9 @@ set_ports_option(struct mg_context *phys_ctx)
 				}
 			} else {
 				if (so.lsa.sa.sa_family == AF_INET6
-				    && setsockopt(so.sock,
-				                  IPPROTO_IPV6,
-				                  IPV6_V6ONLY,
+				    && zts_setsockopt(so.sock,
+				                  ZTS_IPPROTO_IPV6,
+				                  ZTS_IPV6_V6ONLY,
 				                  (void *)&on,
 				                  sizeof(on))
 				           != 0) {
@@ -15103,7 +15105,7 @@ set_ports_option(struct mg_context *phys_ctx)
 		if (so.lsa.sa.sa_family == AF_INET) {
 
 			len = sizeof(so.lsa.sin);
-			if (bind(so.sock, &so.lsa.sa, len) != 0) {
+			if (zts_bind(so.sock, &so.lsa.sa, len) != 0) {
 				mg_cry_ctx_internal(phys_ctx,
 				                    "cannot bind to %.*s: %d (%s)",
 				                    (int)vec.len,
@@ -15119,7 +15121,7 @@ set_ports_option(struct mg_context *phys_ctx)
 		else if (so.lsa.sa.sa_family == AF_INET6) {
 
 			len = sizeof(so.lsa.sin6);
-			if (bind(so.sock, &so.lsa.sa, len) != 0) {
+			if (zts_bind(so.sock, &so.lsa.sa, len) != 0) {
 				mg_cry_ctx_internal(phys_ctx,
 				                    "cannot bind to IPv6 %.*s: %d (%s)",
 				                    (int)vec.len,
@@ -15154,7 +15156,7 @@ set_ports_option(struct mg_context *phys_ctx)
 			continue;
 		}
 
-		if (listen(so.sock, (int)opt_listen_backlog) != 0) {
+		if (zts_listen(so.sock, (int)opt_listen_backlog) != 0) {
 
 			mg_cry_ctx_internal(phys_ctx,
 			                    "cannot listen to %.*s: %d (%s)",
@@ -15167,7 +15169,7 @@ set_ports_option(struct mg_context *phys_ctx)
 			continue;
 		}
 
-		if ((getsockname(so.sock, &(usa.sa), &len) != 0)
+		if ((zts_getsockname(so.sock, &(usa.sa), &len) != 0)
 		    || (usa.sa.sa_family != so.lsa.sa.sa_family)) {
 
 			int err = (int)ERRNO;
@@ -15638,8 +15640,8 @@ sslize(struct mg_connection *conn,
 					pfd.fd = conn->client.sock;
 					pfd.events = ((err == SSL_ERROR_WANT_CONNECT)
 					              || (err == SSL_ERROR_WANT_WRITE))
-					                 ? POLLOUT
-					                 : POLLIN;
+					                 ? ZTS_POLLOUT
+					                 : ZTS_POLLIN;
 					pollres =
 					    mg_poll(&pfd, 1, 50, &(conn->phys_ctx->stop_flag));
 					if (pollres < 0) {
@@ -16794,9 +16796,9 @@ reset_per_request_attributes(struct mg_connection *conn)
 static int
 set_tcp_nodelay(SOCKET sock, int nodelay_on)
 {
-	if (setsockopt(sock,
-	               IPPROTO_TCP,
-	               TCP_NODELAY,
+	if (zts_setsockopt(sock,
+	               ZTS_IPPROTO_TCP,
+	               ZTS_TCP_NODELAY,
 	               (SOCK_OPT_TYPE)&nodelay_on,
 	               sizeof(nodelay_on))
 	    != 0) {
@@ -16816,10 +16818,10 @@ close_socket_gracefully(struct mg_connection *conn)
 	char buf[MG_BUF_LEN];
 	int n;
 #endif
-	struct linger linger;
+	struct zts_linger linger;
 	int error_code = 0;
 	int linger_timeout = -2;
-	socklen_t opt_len = sizeof(error_code);
+	zts_socklen_t opt_len = sizeof(error_code);
 
 	if (!conn) {
 		return;
@@ -16884,9 +16886,9 @@ close_socket_gracefully(struct mg_connection *conn)
 
 	if (linger_timeout < -1) {
 		/* Default: don't configure any linger */
-	} else if (getsockopt(conn->client.sock,
-	                      SOL_SOCKET,
-	                      SO_ERROR,
+	} else if (zts_getsockopt(conn->client.sock,
+	                      ZTS_SOL_SOCKET,
+	                      ZTS_SO_ERROR,
 #if defined(_WIN32) /* WinSock uses different data type here */
 	                      (char *)&error_code,
 #else
@@ -16911,9 +16913,9 @@ close_socket_gracefully(struct mg_connection *conn)
 	} else {
 
 		/* Set linger timeout */
-		if (setsockopt(conn->client.sock,
-		               SOL_SOCKET,
-		               SO_LINGER,
+		if (zts_setsockopt(conn->client.sock,
+		               ZTS_SOL_SOCKET,
+		               ZTS_SO_LINGER,
 		               (char *)&linger,
 		               sizeof(linger))
 		    != 0) {
@@ -17069,8 +17071,8 @@ mg_connect_client_impl(const struct mg_client_options *client_options,
 	struct mg_connection *conn = NULL;
 	SOCKET sock;
 	union usa sa;
-	struct sockaddr *psa;
-	socklen_t len;
+	struct zts_sockaddr *psa;
+	zts_socklen_t len;
 
 	unsigned max_req_size =
 	    (unsigned)atoi(config_options[MAX_REQUEST_SIZE].default_value);
@@ -17161,17 +17163,17 @@ mg_connect_client_impl(const struct mg_client_options *client_options,
 	len = (sa.sa.sa_family == AF_INET) ? sizeof(conn->client.rsa.sin)
 	                                   : sizeof(conn->client.rsa.sin6);
 	psa = (sa.sa.sa_family == AF_INET)
-	          ? (struct sockaddr *)&(conn->client.rsa.sin)
-	          : (struct sockaddr *)&(conn->client.rsa.sin6);
+	          ? (struct zts_sockaddr *)&(conn->client.rsa.sin)
+	          : (struct zts_sockaddr *)&(conn->client.rsa.sin6);
 #else
 	len = sizeof(conn->client.rsa.sin);
-	psa = (struct sockaddr *)&(conn->client.rsa.sin);
+	psa = (struct zts_sockaddr *)&(conn->client.rsa.sin);
 #endif
 
 	conn->client.sock = sock;
 	conn->client.lsa = sa;
 
-	if (getsockname(sock, psa, &len) != 0) {
+	if (zts_getsockname(sock, psa, &len) != 0) {
 		mg_cry_internal(conn,
 		                "%s: getsockname() failed: %s",
 		                __func__,
@@ -17518,7 +17520,7 @@ get_rel_url_at_current_server(const char *uri, const struct mg_connection *conn)
 
 	/* Check if the request is directed to a different server. */
 	/* First check if the port is the same. */
-	if (ntohs(USA_IN_PORT_UNSAFE(&conn->client.lsa)) != port) {
+	if (zts_ntohs(USA_IN_PORT_UNSAFE(&conn->client.lsa)) != port) {
 		/* Request is directed to a different port */
 		return 0;
 	}
@@ -18699,7 +18701,7 @@ worker_thread_run(struct mg_connection *conn)
 		 * Thanks to Johannes Winkelmann for the patch.
 		 */
 		conn->request_info.remote_port =
-		    ntohs(USA_IN_PORT_UNSAFE(&conn->client.rsa));
+		    zts_ntohs(USA_IN_PORT_UNSAFE(&conn->client.rsa));
 
 		sockaddr_to_string(conn->request_info.remote_addr,
 		                   sizeof(conn->request_info.remote_addr),
@@ -18831,13 +18833,13 @@ accept_new_connection(const struct socket *listener, struct mg_context *ctx)
 {
 	struct socket so;
 	char src_addr[IP_ADDR_STR_LEN];
-	socklen_t len = sizeof(so.rsa);
+	zts_socklen_t len = sizeof(so.rsa);
 #if !defined(__ZEPHYR__)
 	int on = 1;
 #endif
 	memset(&so, 0, sizeof(so));
 
-	if ((so.sock = accept(listener->sock, &so.rsa.sa, &len))
+	if ((so.sock = zts_accept(listener->sock, &so.rsa.sa, &len))
 	    == INVALID_SOCKET) {
 	} else if (check_acl(ctx, &so.rsa) != 1) {
 		sockaddr_to_string(src_addr, sizeof(src_addr), &so.rsa);
@@ -18852,7 +18854,7 @@ accept_new_connection(const struct socket *listener, struct mg_context *ctx)
 		set_close_on_exec(so.sock, NULL, ctx);
 		so.is_ssl = listener->is_ssl;
 		so.ssl_redir = listener->ssl_redir;
-		if (getsockname(so.sock, &so.lsa.sa, &len) != 0) {
+		if (zts_getsockname(so.sock, &so.lsa.sa, &len) != 0) {
 			mg_cry_ctx_internal(ctx,
 			                    "%s: getsockname() failed: %s",
 			                    __func__,
@@ -18867,9 +18869,9 @@ accept_new_connection(const struct socket *listener, struct mg_context *ctx)
 		 * TCP keep-alive, next keep-alive handshake will figure out that
 		 * the client is down and will close the server end.
 		 * Thanks to Igor Klopov who suggested the patch. */
-		if (setsockopt(so.sock,
-		               SOL_SOCKET,
-		               SO_KEEPALIVE,
+		if (zts_setsockopt(so.sock,
+		               ZTS_SOL_SOCKET,
+		               ZTS_SO_KEEPALIVE,
 		               (SOCK_OPT_TYPE)&on,
 		               sizeof(on))
 		    != 0) {
@@ -18961,10 +18963,10 @@ master_thread_run(struct mg_context *ctx)
 	while (STOP_FLAG_IS_ZERO(&ctx->stop_flag)) {
 		for (i = 0; i < ctx->num_listening_sockets; i++) {
 			pfd[i].fd = ctx->listening_sockets[i].sock;
-			pfd[i].events = POLLIN;
+			pfd[i].events = ZTS_POLLIN;
 		}
 
-		if (poll(pfd, ctx->num_listening_sockets, 200) > 0) {
+		if (zts_poll(pfd, ctx->num_listening_sockets, 200) > 0) {
 			for (i = 0; i < ctx->num_listening_sockets; i++) {
 				/* NOTE(lsm): on QNX, poll() returns POLLRDNORM after the
 				 * successful poll, and POLLIN is defined as
@@ -18972,7 +18974,7 @@ master_thread_run(struct mg_context *ctx)
 				 * Therefore, we're checking pfd[i].revents & POLLIN, not
 				 * pfd[i].revents == POLLIN. */
 				if (STOP_FLAG_IS_ZERO(&ctx->stop_flag)
-				    && (pfd[i].revents & POLLIN)) {
+				    && (pfd[i].revents & ZTS_POLLIN)) {
 					accept_new_connection(&ctx->listening_sockets[i], ctx);
 				}
 			}
