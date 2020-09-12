@@ -3790,7 +3790,7 @@ sockaddr_to_string(char *buf, size_t len, const union usa *usa)
 		return;
 	}
 
-	if (usa->sa.sa_family == AF_INET) {
+    if (usa->sa.sa_family == AF_INET) {
 		getnameinfo(&usa->sa,
 		            sizeof(usa->sin),
 		            buf,
@@ -6213,6 +6213,7 @@ spawn_process(struct mg_connection *conn,
 	} else if (pid != 0) {
 		/* Make sure children close parent-side descriptors.
 		 * The caller will close the child-side immediately. */
+        printf("spawn_processE --- set_close_on_exec\n");
 		set_close_on_exec(fdin[1], conn, NULL);  /* stdin write */
 		set_close_on_exec(fdout[0], conn, NULL); /* stdout read */
 		set_close_on_exec(fderr[0], conn, NULL); /* stderr read */
@@ -9342,6 +9343,7 @@ connect_socket(struct mg_context *ctx /* may be NULL */,
 		return 0;
 	}
 
+    printf("connect_socket --- set_close_on_exec\n");
 	set_close_on_exec(*sock, NULL, ctx);
 
 	if (ip_ver == 4) {
@@ -15220,7 +15222,7 @@ set_ports_option(struct mg_context *phys_ctx)
 			mg_free(ptr);
 			continue;
 		}
-
+        printf("set_ports_option --- set_close_on_exec\n");
 		set_close_on_exec(so.sock, NULL, phys_ctx);
 		phys_ctx->listening_sockets = ptr;
 		phys_ctx->listening_sockets[phys_ctx->num_listening_sockets] = so;
@@ -18851,6 +18853,7 @@ accept_new_connection(const struct socket *listener, struct mg_context *ctx)
 	} else {
 		/* Put so socket structure into the queue */
 		DEBUG_TRACE("Accepted socket %d", (int)so.sock);
+        printf("accept_new_connection --- set_close_on_exec\n");
 		set_close_on_exec(so.sock, NULL, ctx);
 		so.is_ssl = listener->is_ssl;
 		so.ssl_redir = listener->ssl_redir;

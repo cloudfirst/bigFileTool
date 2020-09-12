@@ -3,7 +3,8 @@ CONFIG += console
 CONFIG -= app_bundle
 CONFIG -= qt
 
-DEFINES += MG_EXPERIMENTAL_INTERFACES
+
+# DEFINES += MG_EXPERIMENTAL_INTERFACES
 
 SOURCES += \
     ../../../oxfold/src/oxfold_wrapper.c \
@@ -36,9 +37,10 @@ LIBS += -lpthread -ldl -lm
 }
 
 
-DEFINES += USE_IPV6
-DEFINES += USE_WEBSOCKET
+#  DEFINES += USE_IPV6
+# DEFINES += USE_WEBSOCKET
 DEFINES += USE_SERVER_STATS
+DEFINES += DEBUG
 
 #To build with DEBUG traces:
 #
@@ -65,6 +67,7 @@ DEFINES += USE_SERVER_STATS
 #DEFINES += USE_DUKTAPE
 
 macx {
+    QMAKE_RPATHDIR = ./libs/
     LIBS += -L$$PWD/../../../oxfold/lib/macos-x86_64/ -lzt
     DEPENDPATH += $$PWD/../../../oxfold/lib/macos-x86_64
 }

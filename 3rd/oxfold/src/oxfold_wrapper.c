@@ -179,7 +179,7 @@ int stop_oxfold()
 
 char* getHostIPV4()
 {
-
+    return "0.0.0.0";
 }
 
 char* getNodeIPV4() {
