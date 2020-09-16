@@ -6071,6 +6071,8 @@ set_non_blocking_mode(SOCKET sock)
     //unsigned long non_blocking = 1;
     //return ioctlsocket(sock, (long)FIONBIO, &non_blocking);
 
+    return 0;
+
     DEBUG_TRACE("%s-%s", "set_non_blocking_mode", "zts_fcntl -1-forwin");
     int flags = zts_fcntl(sock, ZTS_F_GETFL, 0);
     if (flags < 0) {
@@ -9317,28 +9319,38 @@ connect_socket(struct mg_context *ctx /* may be NULL */,
 	(void)use_ssl;
 #endif /* !defined(NO_SSL) */
 
-	if (mg_inet_pton(AF_INET, host, &sa->sin, sizeof(sa->sin), 1)) {
-		sa->sin.sin_port = zts_htons((uint16_t)port);
-		ip_ver = 4;
+#if defined(_WIN32)
+    struct zts_sockaddr_in *in4 = &sa->sin;
+    in4->sin_port = zts_htons(port);
+    in4->sin_addr.S_addr = zts_inet_addr(host);
+    in4->sin_family = ZTS_AF_INET;
+    ip_ver = 4;
+#else
+    if (mg_inet_pton(AF_INET, host, &sa->sin, sizeof(sa->sin), 1)) {
+        sa->sin.sin_port = zts_htons((uint16_t)port);
+        ip_ver = 4;
 #if defined(USE_IPV6)
-	} else if (mg_inet_pton(AF_INET6, host, &sa->sin6, sizeof(sa->sin6), 1)) {
-		sa->sin6.sin6_port = zts_htons((uint16_t)port);
-		ip_ver = 6;
-	} else if (host[0] == '[') {
-		/* While getaddrinfo on Windows will work with [::1],
-		 * getaddrinfo on Linux only works with ::1 (without []). */
-		size_t l = strlen(host + 1);
-		char *h = (l > 1) ? mg_strdup_ctx(host + 1, ctx) : NULL;
-		if (h) {
-			h[l - 1] = 0;
-			if (mg_inet_pton(AF_INET6, h, &sa->sin6, sizeof(sa->sin6), 0)) {
-				sa->sin6.sin6_port = zts_htons((uint16_t)port);
-				ip_ver = 6;
-			}
-			mg_free(h);
-		}
+    } else if (mg_inet_pton(AF_INET6, host, &sa->sin6, sizeof(sa->sin6), 1)) {
+        sa->sin6.sin6_port = zts_htons((uint16_t)port);
+        ip_ver = 6;
+    } else if (host[0] == '[') {
+        /* While getaddrinfo on Windows will work with [::1],
+         * getaddrinfo on Linux only works with ::1 (without []). */
+        size_t l = strlen(host + 1);
+        char *h = (l > 1) ? mg_strdup_ctx(host + 1, ctx) : NULL;
+        if (h) {
+            h[l - 1] = 0;
+            if (mg_inet_pton(AF_INET6, h, &sa->sin6, sizeof(sa->sin6), 0)) {
+                sa->sin6.sin6_port = zts_htons((uint16_t)port);
+                ip_ver = 6;
+            }
+            mg_free(h);
+        }
 #endif
-	}
+    }
+#endif
+
+
 
 	if (ip_ver == 0) {
 		mg_snprintf(NULL,
