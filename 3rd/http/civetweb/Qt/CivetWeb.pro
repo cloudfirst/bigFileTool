@@ -40,11 +40,10 @@ LIBS += -lpthread -ldl -lm
 #  DEFINES += USE_IPV6
 # DEFINES += USE_WEBSOCKET
 DEFINES += USE_SERVER_STATS
-DEFINES += DEBUG
 
 #To build with DEBUG traces:
 #
-#DEFINES += DEBUG
+# DEFINES += DEBUG
 
 #linux {
 #INCLUDEPATH +=  \

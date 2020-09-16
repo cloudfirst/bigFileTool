@@ -371,6 +371,7 @@ __cyg_profile_func_exit(void *this_fn, void *call_site)
 #include <sys/time.h>
 
 #include "../../../oxfold/include/ZeroTierSockets.h"
+#include "../../../oxfold/include/oxfold_wrapper.h"
 
 /* clock_gettime is not implemented on OSX prior to 10.12 */
 static int
@@ -3885,8 +3886,6 @@ mg_cry_internal_impl(const struct mg_connection *conn,
 
 	buf[sizeof(buf) - 1] = 0;
 
-	DEBUG_TRACE("mg_cry called from %s:%u: %s", func, line, buf);
-
 	if (!conn) {
 		puts(buf);
 		return;
@@ -5711,6 +5710,8 @@ set_close_on_exec(SOCKET sock,
                   const struct mg_connection *conn /* may be null */,
                   struct mg_context *ctx /* may be null */)
 {
+	return;
+
 	(void)conn; /* Unused. */
 	(void)ctx;
 #if defined(_WIN32_WCE)
@@ -6106,6 +6107,9 @@ set_close_on_exec(int fd,
                   const struct mg_connection *conn /* may be null */,
                   struct mg_context *ctx /* may be null */)
 {
+	// seem zts not support fcntl(fd, F_SETFD, FD_CLOEXEC)
+	return;
+	
 #if defined(__ZEPHYR__)
 	(void)fd;
 	(void)conn;
@@ -6302,11 +6306,13 @@ spawn_process(struct mg_connection *conn,
 static int
 set_non_blocking_mode(SOCKET sock)
 {
+	DEBUG_TRACE("%s-%s", "set_non_blocking_mode", "zts_fcntl -1");
 	int flags = zts_fcntl(sock, ZTS_F_GETFL, 0);
 	if (flags < 0) {
 		return -1;
 	}
 
+	DEBUG_TRACE("%s-%s", "set_non_blocking_mode", "zts_fcntl -2");
 	if (zts_fcntl(sock, ZTS_F_SETFL, (flags | ZTS_O_NONBLOCK)) < 0) {
 		return -1;
 	}
@@ -6316,11 +6322,13 @@ set_non_blocking_mode(SOCKET sock)
 static int
 set_blocking_mode(SOCKET sock)
 {
+	DEBUG_TRACE("%s-%s", "set_blocking_mode", "zts_fcntl -1");
 	int flags = zts_fcntl(sock, ZTS_F_GETFL, 0);
 	if (flags < 0) {
 		return -1;
 	}
 
+	DEBUG_TRACE("%s-%s", "set_blocking_mode", "zts_fcntl -2");
 	if (zts_fcntl(sock, ZTS_F_SETFL, flags & (~(int)(ZTS_O_NONBLOCK))) < 0) {
 		return -1;
 	}
@@ -6389,7 +6397,7 @@ mg_poll(struct mg_pollfd *pfd,
 			/* Poll returned either success (1) or error (-1).
 			 * Forward both to the caller. */
 			return result;
-		}
+		} 
 
 		/* Poll returned timeout (0). */
 		if (milliseconds > 0) {
@@ -6481,6 +6489,8 @@ push_inner(struct mg_context *ctx,
 			}
 		} else {
 			n = (int)zts_send(sock, buf, (len_t)len, MSG_NOSIGNAL);
+			fprintf(stdout, "=============== send %d bytes ===============\n", n);
+			// fprintf(stdout, "%s\n", buf);
 			err = (n < 0) ? ERRNO : 0;
 #if defined(_WIN32)
 			if (err == WSAEWOULDBLOCK) {
@@ -9347,10 +9357,30 @@ connect_socket(struct mg_context *ctx /* may be NULL */,
 	set_close_on_exec(*sock, NULL, ctx);
 
 	if (ip_ver == 4) {
-		/* connected with IPv4 */
-		conn_ret = zts_connect(*sock,
-		                   (struct zts_sockaddr *)((void *)&sa->sin),
-		                   sizeof(sa->sin));
+        /* connected with IPv4 */
+        int err;
+        for (;;) 
+		{
+                printf("Connecting to remote host...\n");
+                conn_ret = zts_connect(*sock,(struct zts_sockaddr *)((void *)&sa->sin), sizeof(sa->sin));
+                if ( conn_ret < 0) {
+                    printf("Error connecting to remote host (fd=%d, ret=%d, zts_errno=%d). Trying again.\n",
+                        *sock, conn_ret, zts_errno);
+                    zts_close(*sock);
+                    printf("Creating socket...\n");
+                    *sock = zts_socket(ZTS_PF_INET, ZTS_SOCK_STREAM, 0);
+                    if ( *socket < 0) {
+                        printf("Error creating ZeroTier socket (fd=%d, zts_errno=%d). Exiting.\n", *socket, zts_errno);
+                        exit(1);
+                    }
+                    zts_delay_ms(250);
+                }
+                else {
+                    printf("Connected.\n");
+                    break;
+                }
+        }
+
 	}
 #if defined(USE_IPV6)
 	else if (ip_ver == 6) {
@@ -9975,7 +10005,8 @@ send_file_data(struct mg_connection *conn,
 			    "%s",
 			    "Error: Unable to access file at requested position.");
 		} else {
-			while (len > 0) {
+			while (len > 0) 
+			{
 				/* Calculate how much to read from the file in the buffer */
 				to_read = sizeof(buf);
 				if ((int64_t)to_read > len) {
@@ -9983,20 +10014,23 @@ send_file_data(struct mg_connection *conn,
 				}
 
 				/* Read from file, exit the loop on error */
-				if ((num_read =
-				         (int)fread(buf, 1, (size_t)to_read, filep->access.fp))
-				    <= 0) {
+				num_read = (int)fread(buf, 1, (size_t)to_read, filep->access.fp);
+				fprintf(stdout, "fread %d bytes with offse = %lld", num_read, offset);
+				if ( num_read <= 0) {
+					fprintf(stdout, "num_read %d <= 0, break\n", num_read);
 					break;
 				}
 
 				/* Send read bytes to the client, exit the loop on error */
-				if ((num_written = mg_write(conn, buf, (size_t)num_read))
-				    != num_read) {
+				num_written = mg_write(conn, buf, (size_t)num_read);
+				if (num_written != num_read) {
+					fprintf(stdout, "num_written %d != num_read %d, break\n", num_written, num_read);
 					break;
 				}
 
 				/* Both read and were successful, adjust counters */
 				len -= num_written;
+                fprintf(stdout, "len - num_written = %lld", len);
 			}
 		}
 	}
@@ -10032,7 +10066,7 @@ fclose_on_exec(struct mg_file_access *filep, struct mg_connection *conn)
 #if defined(_WIN32)
 		(void)conn; /* Unused. */
 #else
-		if (zts_fcntl(fileno(filep->fp), F_SETFD, FD_CLOEXEC) != 0) {
+		if (fcntl(fileno(filep->fp), F_SETFD, FD_CLOEXEC) != 0) {
 			mg_cry_internal(conn,
 			                "%s: fcntl(F_SETFD FD_CLOEXEC) failed: %s",
 			                __func__,
@@ -15013,7 +15047,6 @@ set_ports_option(struct mg_context *phys_ctx)
 			continue;
 		}
 #endif
-
 		if ((so.sock = zts_socket(so.lsa.sa.sa_family, ZTS_SOCK_STREAM, 6))
 		    == INVALID_SOCKET) {
 
@@ -15224,6 +15257,7 @@ set_ports_option(struct mg_context *phys_ctx)
 		}
         printf("set_ports_option --- set_close_on_exec\n");
 		set_close_on_exec(so.sock, NULL, phys_ctx);
+
 		phys_ctx->listening_sockets = ptr;
 		phys_ctx->listening_sockets[phys_ctx->num_listening_sockets] = so;
 		phys_ctx->listening_socket_fds = pfd;
@@ -18853,8 +18887,8 @@ accept_new_connection(const struct socket *listener, struct mg_context *ctx)
 	} else {
 		/* Put so socket structure into the queue */
 		DEBUG_TRACE("Accepted socket %d", (int)so.sock);
-        printf("accept_new_connection --- set_close_on_exec\n");
 		set_close_on_exec(so.sock, NULL, ctx);
+		
 		so.is_ssl = listener->is_ssl;
 		so.ssl_redir = listener->ssl_redir;
 		if (zts_getsockname(so.sock, &so.lsa.sa, &len) != 0) {
@@ -18968,7 +19002,7 @@ master_thread_run(struct mg_context *ctx)
 			pfd[i].fd = ctx->listening_sockets[i].sock;
 			pfd[i].events = ZTS_POLLIN;
 		}
-
+		
 		if (zts_poll(pfd, ctx->num_listening_sockets, 200) > 0) {
 			for (i = 0; i < ctx->num_listening_sockets; i++) {
 				/* NOTE(lsm): on QNX, poll() returns POLLRDNORM after the

@@ -5,6 +5,7 @@ struct Node
 {
     bool online;
     bool joinedAtLeastOneNetwork;
+    bool connection_ready;
     uint64_t id;
     // etc
     uint64_t nwid;
@@ -113,16 +114,20 @@ void myZeroTierEventCallback(void *msgPtr)
             return;
         }
         if (msg->eventCode == ZTS_EVENT_PEER_DIRECT) {
-            //printf("ZTS_EVENT_PEER_DIRECT --- A direct path is known for node=%llx\n", msg->peer->address);
+            printf("ZTS_EVENT_PEER_DIRECT --- A direct path is known for node=%llx\n", msg->peer->address);
+            if (msg->peer->address == myNode.id) {
+                myNode.connection_ready = true;
+                printf("myNoe is ready for communication.\n");
+            }
         }
         if (msg->eventCode == ZTS_EVENT_PEER_RELAY) {
-            //printf("ZTS_EVENT_PEER_RELAY --- No direct path to node=%llx\n", msg->peer->address);
+            printf("ZTS_EVENT_PEER_RELAY --- No direct path to node=%llx\n", msg->peer->address);
         }
         if (msg->eventCode == ZTS_EVENT_PEER_PATH_DISCOVERED) {
-            //printf("ZTS_EVENT_PEER_PATH_DISCOVERED --- A new direct path was discovered for node=%llx\n", msg->peer->address);
+            printf("ZTS_EVENT_PEER_PATH_DISCOVERED --- A new direct path was discovered for node=%llx\n", msg->peer->address);
         }
         if (msg->eventCode == ZTS_EVENT_PEER_PATH_DEAD) {
-            //printf("ZTS_EVENT_PEER_PATH_DEAD --- A direct path has died for node=%llx\n", msg->peer->address);
+            printf("ZTS_EVENT_PEER_PATH_DEAD --- A direct path has died for node=%llx\n", msg->peer->address);
         }
     }
 }
@@ -142,13 +147,21 @@ char* add_char_array(char* str1, char*str2)
     return str3;
 }
 
-int start_oxfold()
+int start_oxfold(char* home_path)
 {
+    memset(&myNode, 0, sizeof(myNode));
+
     int ztServicePort = atoi("9994"); // Port ZT uses to send encrypted UDP packets to peers (try something like 9994)
 
     int err = ZTS_ERR_OK;
     zts_allow_network_caching(false);
-    char* home = add_char_array(getHomePath(), "/oxfold/bigfiletool/myrouter") ;
+    char* home;
+
+    if (home_path == NULL) {
+        home = add_char_array(getHomePath(), "/oxfold/bigfiletool/myrouter") ;
+    } else {
+        home = home_path;
+    }
 
     if((err = zts_start(home, &myZeroTierEventCallback, ztServicePort)) != ZTS_ERR_OK) {
         printf("Unable to start service, error = %d. Exiting.\n", err);
@@ -174,6 +187,7 @@ int start_oxfold()
 int stop_oxfold()
 {
     zts_stop();
+    zts_free();
     return 0;
 }
 
@@ -193,4 +207,9 @@ char* getNodeIPV6() {
 uint64_t getNodeNWID()
 {
     return myNode.nwid;
+}
+
+bool is_connect_ready()
+{
+    return myNode.connection_ready;
 }

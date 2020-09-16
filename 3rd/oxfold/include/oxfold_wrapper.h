@@ -13,11 +13,12 @@ extern "C" {
 
 #define OXFOLD_NWID 0xa6f4adb92de77959
 
-int start_oxfold();
+int start_oxfold(char* home_path);
 int stop_oxfold();
 char* getNodeIPV4();
 char* getNodeIPV6();
 uint64_t getNodeNWID();
+bool is_connect_ready();
 
 #ifdef __cplusplus
 }
