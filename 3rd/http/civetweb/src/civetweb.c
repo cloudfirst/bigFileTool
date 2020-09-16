@@ -441,7 +441,7 @@ _civet_safe_clock_gettime(int clk_id, struct timespec *t)
  * For Linux EAGAIN==EWOULDBLOCK, maybe EAGAIN!=EWOULDBLOCK is history from
  * decades ago, but better check both and let the compile optimize it. */
 #define ERROR_TRY_AGAIN(err)                                                   \
-	(((err) == EAGAIN) || ((err) == EWOULDBLOCK) || ((err) == EINTR))
+	(((err) == ZTS_EAGAIN) || ((err) == ZTS_EWOULDBLOCK) || ((err) == ZTS_EINTR))
 #endif
 
 
@@ -6489,9 +6489,9 @@ push_inner(struct mg_context *ctx,
 			}
 		} else {
 			n = (int)zts_send(sock, buf, (len_t)len, MSG_NOSIGNAL);
-			fprintf(stdout, "=============== send %d bytes ===============\n", n);
-			// fprintf(stdout, "%s\n", buf);
+			fprintf(stdout, "push_inner:======= send %d bytes =======\n", n);
 			err = (n < 0) ? ERRNO : 0;
+			fprintf(stdout,  "push_inner: err = %d\n", err);
 #if defined(_WIN32)
 			if (err == WSAEWOULDBLOCK) {
 				err = 0;
@@ -6499,22 +6499,28 @@ push_inner(struct mg_context *ctx,
 			}
 #else
 			if (ERROR_TRY_AGAIN(err)) {
+				fprintf(stdout, "push_inner:A ERROR_TRY_AGAIN, n=0\n");
 				err = 0;
 				n = 0;
 			}
 #endif
 			if (n < 0) {
 				/* shutdown of the socket at client side */
-				return -2;
+				fprintf(stdout, "push_inner:B return -2, since n=%d\n", n);
+				err = 0;
+				n = 0;
+				//return -2;
 			}
 		}
 
 		if (!STOP_FLAG_IS_ZERO(&ctx->stop_flag)) {
+			fprintf(stdout, "push_inner:C return -2 since STOP_FLAG_IS_ZERO\n");
 			return -2;
 		}
 
 		if ((n > 0) || ((n == 0) && (len == 0))) {
 			/* some data has been read, or no data was requested */
+			fprintf(stdout, "push_inner:D return n = %d\n", n );
 			return n;
 		}
 		if (n < 0) {
@@ -6527,6 +6533,7 @@ push_inner(struct mg_context *ctx,
 			 * if there is a reproducible situation, it should be
 			 * investigated in detail.
 			 */
+			fprintf(stdout, "push_inner:E return -2 since n < 0\n");
 			return -2;
 		}
 
@@ -6546,9 +6553,11 @@ push_inner(struct mg_context *ctx,
 			pfd[0].events = ZTS_POLLOUT;
 			pollres = mg_poll(pfd, 1, (int)(ms_wait), &(ctx->stop_flag));
 			if (!STOP_FLAG_IS_ZERO(&ctx->stop_flag)) {
+				fprintf(stdout, "push_inner:F STOP_FLAG_IS_ZERO != 0\n");
 				return -2;
 			}
 			if (pollres > 0) {
+				fprintf(stdout, "push_inner:F continue since pollres > 0\n");
 				continue;
 			}
 		}
@@ -6557,6 +6566,7 @@ push_inner(struct mg_context *ctx,
 			now = mg_get_current_time_ns();
 			if ((now - start) > timeout_ns) {
 				/* Timeout */
+				fprintf(stdout, "push_inner:G return -1 since break for Timeout\n ");
 				break;
 			}
 		}
@@ -6596,16 +6606,20 @@ push_all(struct mg_context *ctx,
 		if (n < 0) {
 			if (nwritten == 0) {
 				nwritten = -1; /* Propagate the error */
+				fprintf(stdout, "push_all: break since n = %d and nwritten = %d\n", n, nwritten);
 			}
 			break;
 		} else if (n == 0) {
+			fprintf(stdout, "push_all: break since n = 0\n");
 			break; /* No more data to write */
 		} else {
 			nwritten += n;
 			len -= n;
+			fprintf(stdout, "push_all: continue call push_inner() with len = %d\n", len);
 		}
 	}
 
+	fprintf(stdout, "push_all: finished pushing %d bytes\n", nwritten);
 	return nwritten;
 }
 
@@ -7081,6 +7095,7 @@ mg_write(struct mg_connection *conn, const void *buf, size_t len)
 	if (total > 0) {
 		conn->num_bytes_sent += total;
 	}
+	fprintf(stdout, "mg_write:  write %d bytes\n", total);
 	return total;
 }
 
@@ -10015,22 +10030,22 @@ send_file_data(struct mg_connection *conn,
 
 				/* Read from file, exit the loop on error */
 				num_read = (int)fread(buf, 1, (size_t)to_read, filep->access.fp);
-				fprintf(stdout, "fread %d bytes with offse = %lld", num_read, offset);
+				fprintf(stdout, "\n\nsend_file_data:fread %d bytes with to_read = %lld\n", num_read, to_read);
 				if ( num_read <= 0) {
-					fprintf(stdout, "num_read %d <= 0, break\n", num_read);
+					fprintf(stdout, "send_file_data:num_read %d <= 0, break\n", num_read);
 					break;
 				}
 
 				/* Send read bytes to the client, exit the loop on error */
 				num_written = mg_write(conn, buf, (size_t)num_read);
 				if (num_written != num_read) {
-					fprintf(stdout, "num_written %d != num_read %d, break\n", num_written, num_read);
+					fprintf(stdout, "send_file_data:num_written %d != num_read %d, break\n", num_written, num_read);
 					break;
 				}
 
 				/* Both read and were successful, adjust counters */
 				len -= num_written;
-                fprintf(stdout, "len - num_written = %lld", len);
+                fprintf(stdout, "send_file_data:len - num_written = %lld\n", len);
 			}
 		}
 	}
