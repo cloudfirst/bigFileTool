@@ -20,6 +20,9 @@
  * THE SOFTWARE.
  */
 
+#include "../../../oxfold/include/ZeroTierSockets.h"
+#include "../../../oxfold/include/oxfold_wrapper.h"
+
 #if defined(__GNUC__) || defined(__MINGW32__)
 #define GCC_VERSION                                                            \
 	(__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)
@@ -369,9 +372,6 @@ __cyg_profile_func_exit(void *this_fn, void *call_site)
 #include <mach/mach_time.h>
 #include <sys/errno.h>
 #include <sys/time.h>
-
-#include "../../../oxfold/include/ZeroTierSockets.h"
-#include "../../../oxfold/include/oxfold_wrapper.h"
 
 /* clock_gettime is not implemented on OSX prior to 10.12 */
 static int
@@ -6068,8 +6068,20 @@ set_blocking_mode(SOCKET sock)
 static int
 set_non_blocking_mode(SOCKET sock)
 {
-	unsigned long non_blocking = 1;
-	return ioctlsocket(sock, (long)FIONBIO, &non_blocking);
+    //unsigned long non_blocking = 1;
+    //return ioctlsocket(sock, (long)FIONBIO, &non_blocking);
+
+    DEBUG_TRACE("%s-%s", "set_non_blocking_mode", "zts_fcntl -1-forwin");
+    int flags = zts_fcntl(sock, ZTS_F_GETFL, 0);
+    if (flags < 0) {
+        return -1;
+    }
+
+    DEBUG_TRACE("%s-%s", "set_non_blocking_mode", "zts_fcntl -2-forwin");
+    if (zts_fcntl(sock, ZTS_F_SETFL, (flags | ZTS_O_NONBLOCK)) < 0) {
+        return -1;
+    }
+    return 0;
 }
 
 #else
@@ -7812,6 +7824,7 @@ interpret_uri(struct mg_connection *conn, /* in/out: request (must be valid) */
 	truncated = 0;
 	mg_snprintf(
 	    conn, &truncated, filename, filename_buf_len - 1, "%s%s", root, uri);
+    fprintf(stdout, "requested file is : %d", filename);
 
 	if (truncated) {
 		goto interpret_cleanup;
@@ -9370,6 +9383,10 @@ connect_socket(struct mg_context *ctx /* may be NULL */,
 
     printf("connect_socket --- set_close_on_exec\n");
 	set_close_on_exec(*sock, NULL, ctx);
+
+    #if defined(_WIN32)
+    int zts_errno = 0;
+    #endif
 
 	if (ip_ver == 4) {
         /* connected with IPv4 */
@@ -13351,7 +13368,11 @@ parse_match_net(const struct vec *vec, const union usa *sa, int no_strict)
 		if ((a < 256) && (b < 256) && (c < 256) && (d < 256) && (slash < 33)) {
 			/* IPv4 format */
 			if (sa->sa.sa_family == AF_INET) {
+                #if defined(_WIN32)
+                uint32_t ip = (uint32_t)zts_ntohl(sa->sin.sin_addr.S_addr);
+                #else
 				uint32_t ip = (uint32_t)zts_ntohl(sa->sin.sin_addr.s_addr);
+                #endif
 				uint32_t net = ((uint32_t)a << 24) | ((uint32_t)b << 16)
 				               | ((uint32_t)c << 8) | (uint32_t)d;
 				uint32_t mask = slash ? (0xFFFFFFFFu << (32 - slash)) : 0;
@@ -14834,7 +14855,11 @@ parse_port_string(const struct vec *vec, struct socket *so, int *ip_version)
 	if (sscanf(vec->ptr, "%u.%u.%u.%u:%u%n", &a, &b, &c, &d, &port, &len)
 	    == 5) {
 		/* Bind to a specific IPv4 address, e.g. 192.168.1.5:8080 */
+        #if defined(_WIN32)
+        so->lsa.sin.sin_addr.S_addr =
+        #else
 		so->lsa.sin.sin_addr.s_addr =
+        #endif
 		    zts_htonl((a << 24) | (b << 16) | (c << 8) | d);
 		so->lsa.sin.sin_port = zts_htons((uint16_t)port);
 		*ip_version = 4;

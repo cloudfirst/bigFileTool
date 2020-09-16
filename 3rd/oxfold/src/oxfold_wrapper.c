@@ -132,19 +132,29 @@ void myZeroTierEventCallback(void *msgPtr)
     }
 }
 
-char* getHomePath()
-{
-    char * value;
-    value = getenv ("HOME");
-    return value;
-}
-
 char* add_char_array(char* str1, char*str2)
 {
     char * str3 = (char *) malloc(1 + strlen(str1)+ strlen(str2) );
     strcpy(str3, str1);
     strcat(str3, str2);
     return str3;
+}
+
+char* getHomePath()
+{
+#if defined(_WIN32)
+    char *home_drive;
+    char *home_path;
+    int ret;
+    home_drive = getenv("HOMEDRIVE");
+    home_path  = getenv("HOMEPATH");
+    char *home = add_char_array(home_drive, home_path);
+    return add_char_array(home, "\\oxfold\\bigfiletool\\myrouter");
+#else
+    char * value;
+    value = getenv ("HOME");
+    return add_char_array(value, "/oxfold/bigfiletool/myrouter");
+#endif
 }
 
 int start_oxfold(char* home_path)
@@ -158,7 +168,7 @@ int start_oxfold(char* home_path)
     char* home;
 
     if (home_path == NULL) {
-        home = add_char_array(getHomePath(), "/oxfold/bigfiletool/myrouter") ;
+        home = getHomePath();
     } else {
         home = home_path;
     }

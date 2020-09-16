@@ -43,7 +43,7 @@ DEFINES += USE_SERVER_STATS
 
 #To build with DEBUG traces:
 #
-# DEFINES += DEBUG
+DEFINES += DEBUG
 
 #linux {
 #INCLUDEPATH +=  \
@@ -69,4 +69,10 @@ macx {
     QMAKE_RPATHDIR = ./libs/
     LIBS += -L$$PWD/../../../oxfold/lib/macos-x86_64/ -lzt
     DEPENDPATH += $$PWD/../../../oxfold/lib/macos-x86_64
+}
+
+win32 {
+    QMAKE_RPATHDIR = ./libs/
+    LIBS += -L$$PWD/../../../oxfold/lib/win-x86/ -lzt-shared
+    DEPENDPATH += $$PWD/../../../oxfold/lib/win-x86
 }
