@@ -26,6 +26,7 @@ public slots:
 private:
     Ui::Page_shared *ui;
     QProcess  *p_http_server;
+    bool  b_start_webserver_auto;
 
 protected:
     virtual void resizeEvent(QResizeEvent *e) override;

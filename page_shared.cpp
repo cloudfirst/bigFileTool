@@ -22,28 +22,32 @@ Page_shared::Page_shared(QWidget *parent) :
     ui->setupUi(this);
     ui->bt_delete_share->setVisible(false);
     ui->bt_share_file->setVisible(false);
+    b_start_webserver_auto = false;
 
     this->init_table();
 
-
     this->p_http_server = new QProcess(this);
 
-    QString exe_path;
-#if defined(_WIN32)
-     exe_path = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\CivetWeb.exe";
-     QStringList args = {"-document_root",
-                         QDir::toNativeSeparators((QDir::homePath()) + "\\oxfold\\bigfiletool\\shared").toStdString().c_str()
-                        };
-#else
-    exe_path = QDir::homePath() + "/oxfold/CivetWeb";
-    QStringList args = {"-document_root",
-                        (QDir::homePath() + "/oxfold/bigfiletool/shared").toStdString().c_str(),
-                       };
-#endif
+    if (b_start_webserver_auto) {
+        QString exe_path;
+    #if defined(_WIN32)
+         exe_path = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\webtool\\oxfold-webtool.exe";
+         QStringList args = {"-document_root",
+                             QDir::toNativeSeparators((QDir::homePath()) + "\\oxfold\\bigfiletool\\shared").toStdString().c_str()
+                            };
+    #else
+        exe_path = QDir::homePath() + "/oxfold/webtool/oxfold-webtool";
+        QStringList args = {"-document_root",
+                            (QDir::homePath() + "/oxfold/bigfiletool/shared").toStdString().c_str(),
+                           };
+    #endif
 
-    p_http_server->start(exe_path, args);
-    connect(p_http_server, SIGNAL(readyReadStandardOutput()), this, SLOT(rightMessage()) );
+        //p_http_server->start(exe_path, args);
+        connect(p_http_server, SIGNAL(readyReadStandardOutput()), this, SLOT(rightMessage()) );
+    }
 }
+
+
 
 void Page_shared::rightMessage()
 {

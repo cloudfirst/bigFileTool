@@ -4,12 +4,15 @@
 #include <QFileDialog>
 #include <QDateTime>
 #include <QDebug>
-#include "add_link_dialog.h"
 #include <QJsonDocument>
 #include <QJsonObject>
 #include "http_thread.h"
 #include <QJsonArray>
+#include <QProgressBar>
+#include <QString>
+
 #include "mytool.h"
+#include "add_link_dialog.h"
 
 #if defined(_WIN32)
 #include "Windows.h"
@@ -21,15 +24,90 @@ Page_downloading::Page_downloading(QWidget *parent) :
 {
     ui->setupUi(this);
     init_table();
+    this->m_Timer = NULL;
+
 }
 
 Page_downloading::~Page_downloading()
 {
     delete ui;
+    m_Timer->stop();
+    delete  m_Timer;
     for (int i=0; i<this->http_client_array.size(); ++i)
     {
-        http_client_array.at(i)->kill();
+        http_client_array.at(i)->downloading_process->kill();
+        delete  http_client_array.at(i);
     }
+}
+
+void Page_downloading::start_download_status_timer()
+{
+    if (m_Timer == NULL) {
+        m_Timer = new QTimer(this);
+        connect(m_Timer, SIGNAL(timeout()),this, SLOT(MyTimerSlot()));
+    }
+    m_Timer->start(1000);
+}
+
+QString convertSencond2HHMMSS(uint64_t time)
+{
+    int hour = time/3600;
+    time = time%3600;
+    int min = time/60;
+    time = time%60;
+    int sec = time;
+
+    return QString::number(hour) + ":" + QString::number(min) + ":" + QString::number(sec);
+}
+
+void Page_downloading::MyTimerSlot()
+{
+    QTableWidget * t = ui->tableWidget;
+    QProgressBar *mypgb;
+    QTableWidgetItem *item;
+
+    for (int i=0; i<this->http_client_array.size(); ++i)
+    {
+        Downloading_Task *dt = http_client_array.at(i);
+        QString fname = dt->downloading_file_name;
+        // get current file size
+        uint64_t new_size = dt->size_in_5s.last() + 10 * (qrand() % ((9 + 1) - 1) + 1);
+        dt->size_in_5s.pop_front();
+        dt->size_in_5s.append(new_size);
+
+        int percentage = 0;
+        double bps = 0.0;
+        uint64_t letf_seconds = 0;
+        if (new_size >= dt->total_len) {
+            percentage = 100;
+        } else {
+            percentage = new_size * 100 / dt->total_len;
+            bps = (new_size - dt->size_in_5s.first()) / 5.0;
+            letf_seconds = (dt->total_len - new_size) / bps;
+        }
+
+        // update tableWidget
+        mypgb = (QProgressBar*)t->cellWidget(i, 3); // update progress bar
+        mypgb->setValue(percentage);
+
+        item = t->item(dt->row_in_tableWidge, 4);  // update speed
+        QString _txt = MyTool::converFileSizeToKBMBGB((qint64)bps) + "/s" ;
+        item->setText(_txt);
+
+        item = t->item(dt->row_in_tableWidge, 5);  // update time left
+        item->setText("剩余 " +  convertSencond2HHMMSS(letf_seconds));
+    }
+}
+
+uint64_t getCurrentFileSize(QString fname)
+{
+#if defined(_WIN32)
+    QString df(QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloading\\" + fname + ".downloading");
+#else
+    QString df(QDir::homePath() + "/oxfold/bigfiletool/downloading/" + fname + ".downloading");
+#endif
+    QFileInfo  info(df);
+    return info.size();
 }
 
 void Page_downloading::init_table()
@@ -41,7 +119,7 @@ void Page_downloading::init_table()
     t->setSelectionMode( QAbstractItemView::SingleSelection );
 
     // init data
-    int n_cols = 4;
+    int n_cols = 6;
 #if defined(_WIN32)
      QDir dir1(QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloading\\");
 #else
@@ -77,54 +155,82 @@ void Page_downloading::init_table()
     {
         QJsonObject obj = downlaod_array[index].toObject();
         t->insertRow(t->rowCount());
+        // int rh = t->rowHeight(t->rowCount() - 1);
+        // t->setRowHeight(t->rowCount() - 1, 50);
+
+        uint64_t  c_size = getCurrentFileSize(obj["file_name"].toString());
 
         for (int col=0; col!=n_cols; ++col)
         {
             QTableWidgetItem * const i = new QTableWidgetItem;
             i->setFlags(i->flags() & ~Qt::ItemIsEditable);
-            if (col == 0 ) {
+            if (col == 0 ) { //选择
                 //Checkbox
                 i->setFlags(
                     Qt::ItemIsSelectable
                   | Qt::ItemIsUserCheckable
                 );
                 i->setCheckState(Qt::Unchecked);
+                t->setItem(t->rowCount()-1, col, i);
             }
-            if (col == 1 ) {
+            if (col == 1 ) { //文件名
                 i->setText(obj["file_name"].toString());
+                t->setItem(t->rowCount()-1, col, i);
             }
-            if (col == 2 ) {
+            if (col == 2 ) {  //文件大小
                 i->setText(MyTool::converFileSizeToKBMBGB(obj["file_size"].toDouble()));
+                t->setItem(t->rowCount()-1, col, i);
             }
-            if (col == 3 ) {
-                i->setText("stopped");
+            if (col == 3 ) {  //progress bar
+                //i->setText("stopped");
+                QProgressBar *pgbar = new QProgressBar();
+                pgbar->setRange(0,100);
+
+                int percentage = c_size * 100 / obj["file_size"].toDouble();
+                pgbar->setValue(percentage);
+
+                t->setCellWidget(t->rowCount()-1, col, pgbar);
             }
-            t->setItem(t->rowCount()-1, col, i);
+            if (col == 4 ) { //下载速度
+                i->setText("已暂停");
+                t->setItem(t->rowCount()-1, col, i);
+            }
+            if (col == 5 ) { //剩余时间
+                i->setText("0:0:0");
+                t->setItem(t->rowCount()-1, col, i);
+            }
+
         }
 
         QString url = "http://" + obj["host_ip"].toString() + ":8080" + "/" +obj["file_name"].toString();
 #if defined(_WIN32)
         QString dst_file_name = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloading\\" + obj["file_name"].toString() + ".downloading";
+        QString client_cred_path = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\client\\";
 #else
         QString dst_file_name = QDir::homePath() + "/oxfold/bigfiletool/downloading/" + obj["file_name"].toString() + ".downloading";
+        QString client_cred_path = QDir::toNativeSeparators(QDir::homePath()) + "/oxfold/bigfiletool/client/";
 #endif
         QStringList args = {
             "-C",
             url.toStdString().c_str(),
             "-D",
-            dst_file_name.toStdString().c_str()
+            dst_file_name.toStdString().c_str(),
+            "-Z",
+            client_cred_path.toStdString().c_str(),
         };
 
         QProcess *p_http_client =  new QProcess(this);
         QString exe_path;
 #if defined(_WIN32)
-        exe_path = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\CivetWeb.exe";
+        exe_path = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\webtool\\oxfold-webtool.exe";
 #else
-        exe_path = QDir::homePath() + "/oxfold/CivetWeb";
+        exe_path = QDir::homePath() + "/oxfold/webtool/oxfold-webtool";
 #endif
         qDebug("%s %s %s %s %s", exe_path.toStdString().c_str(), args[0].toStdString().c_str(), args[1].toStdString().c_str(), args[2].toStdString().c_str(), args[3].toStdString().c_str() );
-        p_http_client->start(exe_path, args);
-        http_client_array.append(p_http_client);
+        p_http_client->setProgram(exe_path);
+        p_http_client->setArguments(args);
+        //p_http_client->start();
+
         //connect(p_http_client, SIGNAL(readyReadStandardOutput()), this, SLOT(rightMessage()) );
         connect(p_http_client, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
             [=](int exitCode, QProcess::ExitStatus exitStatus)
@@ -134,6 +240,15 @@ void Page_downloading::init_table()
                 On_client_process_finished(obj["file_name"].toString());
             }
         });
+
+        // save process info for timer operation to update progress.
+        Downloading_Task* task = new Downloading_Task;
+        task->downloading_process = p_http_client;
+        task->downloading_file_name = dst_file_name;
+        task->total_len = obj["file_size"].toDouble();
+        task->row_in_tableWidge = t->rowCount() - 1 ;
+        task->size_in_5s = {c_size, c_size, c_size, c_size, c_size};
+        http_client_array.append(task);
     }
 }
 
@@ -150,9 +265,12 @@ void Page_downloading::resizeEvent(QResizeEvent *e)
     t->resize(w, h);
 
     t->setColumnWidth(0, 35);
-    t->setColumnWidth(1, t->width()/3);
-    t->setColumnWidth(2, t->width()/3);
-    t->setColumnWidth(3, t->width()/3);
+    t->setColumnWidth(1, t->width()/4); //file name
+    t->setColumnWidth(2, 80);           //file size
+    t->setColumnWidth(3, t->width()/5); //progress bar
+    t->setColumnWidth(4, t->width()/5); //download speed
+    t->setColumnWidth(5, t->width()/5); //time left
+
 
     QSize  lsize = ui->label->size();
     ui->label->resize(size.width(), lsize.height());
@@ -163,16 +281,20 @@ void Page_downloading::on_bt_pause_all_clicked()
 {
     for (int i=0; i<this->http_client_array.size(); ++i)
     {
-        http_client_array.at(i)->kill();
+        http_client_array.at(i)->downloading_process->kill();
     }
     http_client_array.clear();
 }
 
 void Page_downloading::on_bt_start_all_clicked()
-{
-    QTableWidget * t = ui->tableWidget;
-    t->setRowCount(0);
-    init_table();
+{    
+    for (int i=0; i<this->http_client_array.size(); ++i)
+    {
+        Downloading_Task *dt = http_client_array.at(i);
+        QProcess *proc = dt->downloading_process;
+        proc->start();
+    }
+    this->start_download_status_timer();
 }
 
 void Page_downloading::on_bt_delete_clicked()
@@ -217,17 +339,32 @@ void Page_downloading::add_new_download_task(QString data)
                   | Qt::ItemIsUserCheckable
                 );
                 i->setCheckState(Qt::Unchecked);
+                t->setItem(t->rowCount()-1, col, i);
             }
             if (col == 1 ) {
                 i->setText(file_name);
+                t->setItem(t->rowCount()-1, col, i);
             }
             if (col == 2 ) {
                 i->setText(QString("0KB/") + MyTool::converFileSizeToKBMBGB(file_size));
+                t->setItem(t->rowCount()-1, col, i);
             }
-            if (col == 3 ) {
-                i->setText(QString("0%"));
+            if (col == 3 ) {  //progress bar
+                //i->setText("stopped");
+                QProgressBar *pgbar = new QProgressBar();
+                pgbar->setRange(0,100);
+                pgbar->setValue(0);
+                t->setCellWidget(t->rowCount()-1, col, pgbar);
             }
-            t->setItem(t->rowCount()-1, col, i);
+            if (col == 4 ) { //下载速度
+                i->setText("已暂停");
+                t->setItem(t->rowCount()-1, col, i);
+            }
+            if (col == 5 ) { //剩余时间
+                i->setText("0:0:0");
+                t->setItem(t->rowCount()-1, col, i);
+            }
+
         }
 
         QString url = "http://" + host_ip + ":8080" + "/" + file_name;
@@ -251,8 +388,11 @@ void Page_downloading::add_new_download_task(QString data)
             exe_path = QDir::homePath() + "/oxfold/CivetWeb";
 #endif
         qDebug("%s %s %s %s %s", exe_path.toStdString().c_str(), args[0].toStdString().c_str(), args[1].toStdString().c_str(), args[2].toStdString().c_str(), args[3].toStdString().c_str() );
-        p_http_client->start(exe_path, args);
-        http_client_array.append(p_http_client);
+
+        p_http_client->setProgram(exe_path);
+        p_http_client->setArguments(args);
+        //p_http_client->start();
+
         //connect(p_http_client, SIGNAL(readyReadStandardOutput()), this, SLOT(rightMessage()) );
         connect(p_http_client, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
             [=](int exitCode, QProcess::ExitStatus exitStatus)
@@ -262,6 +402,18 @@ void Page_downloading::add_new_download_task(QString data)
                 On_client_process_finished(file_name);
             }
         });
+
+        this->m_Timer->stop();
+
+        Downloading_Task* task = new Downloading_Task;
+        task->downloading_process = p_http_client;
+        task->downloading_file_name = dst_file_name;
+        task->total_len = obj["file_size"].toDouble();
+        task->row_in_tableWidge = t->rowCount();
+        task->size_in_5s = {0, 0, 0, 0, 0};
+        http_client_array.append(task);
+
+        start_download_status_timer();
     }
 }
 
