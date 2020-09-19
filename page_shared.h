@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QTableWidgetItem>
 #include <QProcess>
+#include <QTimer>
 
 namespace Ui {
 class Page_shared;
@@ -19,14 +20,18 @@ public:
 
     void init_table();
     void mklink(QString target, QString link);
+    void start_download_status_timer();
 
 public slots:
     void rightMessage();
+    void MyTimerSlot();
 
 private:
     Ui::Page_shared *ui;
     QProcess  *p_http_server;
     bool  b_start_webserver_auto;
+
+    QTimer * m_Timer;
 
 protected:
     virtual void resizeEvent(QResizeEvent *e) override;

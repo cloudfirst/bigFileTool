@@ -22,7 +22,9 @@ Page_shared::Page_shared(QWidget *parent) :
     ui->setupUi(this);
     ui->bt_delete_share->setVisible(false);
     ui->bt_share_file->setVisible(false);
-    b_start_webserver_auto = false;
+    this->m_Timer = NULL;
+
+    b_start_webserver_auto = true;
 
     this->init_table();
 
@@ -42,12 +44,30 @@ Page_shared::Page_shared(QWidget *parent) :
                            };
     #endif
 
-        //p_http_server->start(exe_path, args);
+        p_http_server->setProgram(exe_path);
+        p_http_server->setArguments(args);
         connect(p_http_server, SIGNAL(readyReadStandardOutput()), this, SLOT(rightMessage()) );
+        p_http_server->start();
+        start_download_status_timer();
     }
 }
 
+void Page_shared::start_download_status_timer()
+{
+    if (m_Timer == NULL) {
+        m_Timer = new QTimer(this);
+        connect(m_Timer, SIGNAL(timeout()),this, SLOT(MyTimerSlot()));
+    }
+    m_Timer->start(1000*60);
+}
 
+void Page_shared::MyTimerSlot()
+{
+    // check status of p_http_server, and restart it if stopped.
+    if (p_http_server->state() == QProcess::NotRunning) {
+        p_http_server->start();
+    }
+}
 
 void Page_shared::rightMessage()
 {
