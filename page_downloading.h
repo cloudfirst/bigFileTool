@@ -34,11 +34,11 @@ public:
 protected:
     virtual void resizeEvent(QResizeEvent *e) override;
     void start_download_status_timer();
+    int getNumberOfRuningTasks();
 
 public slots:
     void MyTimerSlot();
     void add_new_download_task(QString data);
-    void update_download_task(QString fname, quint64 len, quint64 total);
 
 private slots:
     void on_bt_pause_all_clicked();
@@ -59,6 +59,7 @@ private:
     Ui::Page_downloading *ui;
     QList<Downloading_Task*> http_client_array;
     QTimer * m_Timer;
+    int    max_download_tasks;
 
 };
 
