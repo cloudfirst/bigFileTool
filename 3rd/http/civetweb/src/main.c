@@ -1210,7 +1210,7 @@ run_client(const char *url_arg, const char *dst_file_arg)
 		          "GET /%s HTTP/1.1\r\n"
 		          "Host: %s\r\n"
 		          "Connection: close\r\n"
-				  "Range: bytes=%lld-\r\n",
+                  "Range: bytes=%lld-\r\n"
 		          "\r\n",
 		          resource,
 		          host,
