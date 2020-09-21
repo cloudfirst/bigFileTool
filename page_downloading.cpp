@@ -125,17 +125,24 @@ void Page_downloading::MyTimerSlot()
         item = t->item(row, 2);
         QString _f_len_s = MyTool::converFileSizeToKBMBGB(new_size) + " / " + \
                 MyTool::converFileSizeToKBMBGB(dt->total_len);
-        item->setText(_f_len_s);
+        if (item != NULL) {
+            item->setText(_f_len_s);
+        }
 
         mypgb = (QProgressBar*)t->cellWidget(row, 3); // update progress bar
         mypgb->setValue(percentage);
 
         item = t->item(row, 4);  // update speed
         QString _txt = MyTool::converFileSizeToKBMBGB((qint64)bps) + "/s" ;
-        item->setText(_txt);
+        if (item != NULL) {
+            item->setText(_txt);
+        }
+
 
         item = t->item(row, 5);  // update time left
-        item->setText("剩余 " +  convertSencond2HHMMSS(letf_seconds));
+        if (item != NULL) {
+            item->setText("剩余 " +  convertSencond2HHMMSS(letf_seconds));
+        }
     }
 }
 
