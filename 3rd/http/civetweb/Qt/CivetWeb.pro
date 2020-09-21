@@ -43,7 +43,7 @@ DEFINES += USE_SERVER_STATS
 
 #To build with DEBUG traces:
 #
-DEFINES += DEBUG
+# DEFINES += DEBUG
 
 #linux {
 #INCLUDEPATH +=  \

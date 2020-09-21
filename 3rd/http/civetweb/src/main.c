@@ -1224,7 +1224,11 @@ run_client(const char *url_arg, const char *dst_file_arg)
 		if (ret >= 0) {
 			const struct mg_response_info *ri = mg_get_response_info(conn);
             FILE *f = fopen(dst_file_arg, "ab");
-			fseeko(f, offset, SEEK_SET);
+#if defined(_WIN32)
+            _fseeki64(f, offset, SEEK_SET);
+#else
+            fseeko(f, offset, SEEK_SET);
+#endif
 			fprintf(stdout,
 			        "Response info: %i %s\n",
 			        ri->status_code,
