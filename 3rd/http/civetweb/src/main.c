@@ -1233,7 +1233,7 @@ run_client(const char *url_arg, const char *dst_file_arg)
 			/* Respond reader read. Read body (if any) */
 			ret = mg_read(conn, buf, sizeof(buf));
 			while (ret > 0) {
-				fprintf(stdout, "================== read %d bytes ==================\n", ret);
+				// fprintf(stdout, "================== read %d bytes ==================\n", ret);
                 //fwrite(buf, 1, (unsigned)ret, stdout);
                 fwrite(buf, 1, (unsigned)ret, f);
 				ret = mg_read(conn, buf, sizeof(buf));

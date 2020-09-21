@@ -6504,9 +6504,9 @@ push_inner(struct mg_context *ctx,
 			}
 		} else {
 			n = (int)zts_send(sock, buf, (len_t)len, MSG_NOSIGNAL);
-			fprintf(stdout, "push_inner:======= send %d bytes =======\n", n);
+			// fprintf(stdout, "push_inner:======= send %d bytes =======\n", n);
 			err = (n < 0) ? ERRNO : 0;
-			fprintf(stdout,  "push_inner: err = %d\n", err);
+			// fprintf(stdout,  "push_inner: err = %d\n", err);
 #if defined(_WIN32)
 			if (err == WSAEWOULDBLOCK) {
 				err = 0;
@@ -6521,12 +6521,13 @@ push_inner(struct mg_context *ctx,
 #endif
 			if (n < 0) {
 				/* shutdown of the socket at client side */
-				fprintf(stdout, "push_inner:B return -2, since n=%d\n", n);
+				// fprintf(stdout, "push_inner:B return -2, since n=%d\n", n);
 				if (retry_when_zts_send_1 > 0) {
 					err = 0;
 					n = 0;
 					retry_when_zts_send_1 -= 1;
 				} else {
+					fprintf(stdout, "push_inner: B retry_when_zts_send_1 <=0 so download thread exist.\n");
 					return -2;
 				}
 			}
@@ -6539,7 +6540,7 @@ push_inner(struct mg_context *ctx,
 
 		if ((n > 0) || ((n == 0) && (len == 0))) {
 			/* some data has been read, or no data was requested */
-			fprintf(stdout, "push_inner:D return n = %d\n", n );
+			// fprintf(stdout, "push_inner:D return n = %d\n", n );
 			return n;
 		}
 		if (n < 0) {
@@ -6576,7 +6577,7 @@ push_inner(struct mg_context *ctx,
 				return -2;
 			}
 			if (pollres > 0) {
-				fprintf(stdout, "push_inner:F continue since pollres > 0\n");
+				// fprintf(stdout, "push_inner:F continue since pollres > 0\n");
 				continue;
 			}
 		}
@@ -6634,11 +6635,11 @@ push_all(struct mg_context *ctx,
 		} else {
 			nwritten += n;
 			len -= n;
-			fprintf(stdout, "push_all: continue call push_inner() with len = %d\n", len);
+			// fprintf(stdout, "push_all: continue call push_inner() with len = %d\n", len);
 		}
 	}
 
-	fprintf(stdout, "push_all: finished pushing %d bytes\n", nwritten);
+	// fprintf(stdout, "push_all: finished pushing %d bytes\n", nwritten);
 	return nwritten;
 }
 
@@ -7114,7 +7115,7 @@ mg_write(struct mg_connection *conn, const void *buf, size_t len)
 	if (total > 0) {
 		conn->num_bytes_sent += total;
 	}
-	fprintf(stdout, "mg_write:  write %d bytes\n", total);
+	// fprintf(stdout, "mg_write:  write %d bytes\n", total);
 	return total;
 }
 
@@ -10054,6 +10055,7 @@ send_file_data(struct mg_connection *conn,
 			    "%s",
 			    "Error: Unable to access file at requested position.");
 		} else {
+			fprintf(stdout, "send_file_data: offset = %lld\n", offset);
 			while (len > 0) 
 			{
 				/* Calculate how much to read from the file in the buffer */
@@ -10064,7 +10066,7 @@ send_file_data(struct mg_connection *conn,
 
 				/* Read from file, exit the loop on error */
 				num_read = (int)fread(buf, 1, (size_t)to_read, filep->access.fp);
-				fprintf(stdout, "\n\nsend_file_data:fread %d bytes with to_read = %lld\n", num_read, to_read);
+				// fprintf(stdout, "\n\nsend_file_data:fread %d bytes with to_read = %lld\n", num_read, to_read);
 				if ( num_read <= 0) {
 					fprintf(stdout, "send_file_data:num_read %d <= 0, break\n", num_read);
 					break;
@@ -10079,7 +10081,7 @@ send_file_data(struct mg_connection *conn,
 
 				/* Both read and were successful, adjust counters */
 				len -= num_written;
-                fprintf(stdout, "send_file_data:len - num_written = %lld\n", len);
+                // fprintf(stdout, "send_file_data:len - num_written = %lld\n", len);
 			}
 		}
 	}
