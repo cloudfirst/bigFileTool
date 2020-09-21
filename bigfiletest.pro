@@ -3,7 +3,7 @@ QT       += core gui network
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++11
-CONFIG += console
+# CONFIG += console
 
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings
@@ -21,14 +21,11 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    3rd/http/civetweb.c \
-    3rd/http/civetweb_main.c \
     add_link_dialog.cpp \
     encrypt/simple_encrypt.cpp \
-    http_thread.cpp \
     main.cpp \
     mainwindow.cpp \
-    oxfold_wrapper.cpp \
+    mytool.cpp \
     page_downloaded.cpp \
     page_downloading.cpp \
     page_shared.cpp \
@@ -36,17 +33,10 @@ SOURCES += \
     sharing_dialog.cpp
 
 HEADERS += \
-    3rd/http/civetweb/include/civetweb.h \
-    3rd/http/civetweb/include/civetweb_main.h \
-    3rd/http/civetweb/src/handle_form.inl \
-    3rd/http/civetweb/src/md5.inl \
-    3rd/http/civetweb/src/sha1.inl \
-    3rd/http/civetweb/src/timer.inl \
     add_link_dialog.h \
     encrypt/simple_encrypt.h \
-    http_thread.h \
     mainwindow.h \
-    oxfold_wrapper.h \
+    mytool.h \
     page_downloaded.h \
     page_downloading.h \
     page_shared.h \
@@ -72,16 +62,5 @@ DISTFILES +=
 RESOURCES += \
     res.qrc
 
-INCLUDEPATH += ./3rd/http/civetweb/include
-INCLUDEPATH += ./3rd/http/civetweb/src/
-INCLUDEPATH += ./3rd/oxfold/include
 
-
-
-
-
-
-macx: LIBS += -L$$PWD/3rd/oxfold/macos-x86_64/ -lzt
-
-INCLUDEPATH += $$PWD/3rd/oxfold/macos-x86_64
-DEPENDPATH += $$PWD/3rd/oxfold/macos-x86_64
+win32: LIBS += -lkernel32

@@ -4,8 +4,6 @@
 #include <QMainWindow>
 #include <QListWidget>
 
-#include "http_thread.h"
-
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
@@ -26,8 +24,6 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
-    HTTPThread_server *m_http_server_t;
-    HTTPThread_client *m_http_client_t;
 
 protected:
     virtual void resizeEvent(QResizeEvent *e) override;

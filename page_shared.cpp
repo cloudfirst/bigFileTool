@@ -3,12 +3,17 @@
 #include <QResizeEvent>
 #include <QFileDialog>
 #include <QDateTime>
-#include "oxfold_wrapper.h"
 #include <QDebug>
 #include <QJsonObject>
 #include <QJsonDocument>
 #include "sharing_dialog.h"
 #include "encrypt/simple_encrypt.h"
+#include "mytool.h"
+
+#if defined(_WIN32)
+#include "Windows.h"
+#endif
+
 
 Page_shared::Page_shared(QWidget *parent) :
     QWidget(parent),
@@ -17,16 +22,64 @@ Page_shared::Page_shared(QWidget *parent) :
     ui->setupUi(this);
     ui->bt_delete_share->setVisible(false);
     ui->bt_share_file->setVisible(false);
+    this->m_Timer = NULL;
+
+    b_start_webserver_auto = true;
 
     this->init_table();
+
+    this->p_http_server = new QProcess(this);
+
+    if (b_start_webserver_auto) {
+        QString exe_path;
+    #if defined(_WIN32)
+         exe_path = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\webtool\\oxfold-webtool.exe";
+         QStringList args = {"-document_root",
+                             QDir::toNativeSeparators((QDir::homePath()) + "\\oxfold\\bigfiletool\\shared").toStdString().c_str()
+                            };
+    #else
+        exe_path = QDir::homePath() + "/oxfold/webtool/oxfold-webtool";
+        QStringList args = {"-document_root",
+                            (QDir::homePath() + "/oxfold/bigfiletool/shared").toStdString().c_str(),
+                           };
+    #endif
+
+        p_http_server->setProgram(exe_path);
+        p_http_server->setArguments(args);
+        connect(p_http_server, SIGNAL(readyReadStandardOutput()), this, SLOT(rightMessage()) );
+        p_http_server->start();
+        start_download_status_timer();
+    }
+}
+
+void Page_shared::start_download_status_timer()
+{
+    if (m_Timer == NULL) {
+        m_Timer = new QTimer(this);
+        connect(m_Timer, SIGNAL(timeout()),this, SLOT(MyTimerSlot()));
+    }
+    m_Timer->start(1000*60);
+}
+
+void Page_shared::MyTimerSlot()
+{
+    // check status of p_http_server, and restart it if stopped.
+    if (p_http_server->state() == QProcess::NotRunning) {
+        p_http_server->start();
+    }
+}
+
+void Page_shared::rightMessage()
+{
+    QByteArray strdata = p_http_server->readAllStandardOutput();
+    MyTool::http_server_ip =  QString(strdata);
 }
 
 Page_shared::~Page_shared()
 {
     delete ui;
+    p_http_server->kill();
 }
-
-
 
 void Page_shared::init_table()
 {
@@ -68,7 +121,7 @@ void Page_shared::init_table()
                 i->setText(fileInfo.fileName());
             }
             if (col == 2 ) {
-                i->setText(converFileSizeToKBMBGB(fileInfo.size()));
+                i->setText( MyTool::converFileSizeToKBMBGB(fileInfo.size()));
             }
             if (col == 3 ) {
                 i->setText(fileInfo.lastModified().toString("yyyy.MM.dd hh:mm"));
@@ -125,6 +178,24 @@ void Page_shared::on_shared_file_tableWidget_itemClicked(QTableWidgetItem *item)
 
 }
 
+void Page_shared::mklink(QString target, QString link)
+{
+#if defined (_WIN32)
+    QString _target = QDir::toNativeSeparators(target);
+    QString _link   = QDir::toNativeSeparators(link);
+    BOOL fCreatedLink = CreateHardLinkA( _link.toStdString().c_str(),
+                                        _target.toStdString().c_str(),
+                                        NULL ); // reserved, must be NULL
+
+    if ( fCreatedLink == FALSE )
+    {
+        qDebug("create hadr link failed in windows : %s", _target.toStdString().c_str());
+    }
+#else
+    QFile::link(target, link);
+#endif
+}
+
 // the default dir for shared files are located in ~/oxfold/bigfiletool/shared、
 void Page_shared::on_bt_add_share_file_clicked()
 {
@@ -139,7 +210,7 @@ void Page_shared::on_bt_add_share_file_clicked()
         QDateTime   lastmodified = info.lastModified();
 
         //create symlink at ~/oxfold/bigfiletool/shared
-        QFile::link(afp, QDir::homePath() + "/oxfold/bigfiletool/shared/" + name);
+        mklink(afp, QDir::homePath() + "/oxfold/bigfiletool/shared/" + name);
 
         //add item to tableWidget
         QTableWidget * t = ui->shared_file_tableWidget;
@@ -161,7 +232,7 @@ void Page_shared::on_bt_add_share_file_clicked()
                 i->setText(name);
             }
             if (col == 2 ) {
-                i->setText(converFileSizeToKBMBGB(size));
+                i->setText(MyTool::converFileSizeToKBMBGB(size));
             }
             if (col == 3 ) {
                 i->setText(lastmodified.toString("yyyy.MM.dd hh:mm"));
@@ -175,9 +246,12 @@ void Page_shared::on_bt_add_share_file_clicked()
 
 qint64 getFileSize(QString shared_file_name)
 {
+#if defined (_WIN32)
+    QString file_path = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\shared\\" +  shared_file_name;
+#else
     QString file_path = QDir::homePath() + "/oxfold/bigfiletool/shared/" +  shared_file_name;
+#endif
     QFileInfo info(file_path);
-
     return info.size();
 }
 
@@ -201,13 +275,14 @@ QString my_randString(int len)
 }
 
 
-
-
-
 // sharing link looks like http://ip:8080/filename.ext
 void Page_shared::on_bt_share_file_clicked()
 {
-    QString host_ip = getNodeIPV4();
+#if defined (ENABLE_OXFOLD)
+    QString host_ip = MyTool::http_server_ip;
+#else
+    QString host_ip = MyTool::getNodeIPV4();
+#endif
     int     port = 8080;
     QString file_name;
     qint64  file_size;
