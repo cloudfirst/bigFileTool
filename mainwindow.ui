@@ -74,6 +74,7 @@
     <property name="font">
      <font>
       <family>Microsoft YaHei</family>
+      <pointsize>12</pointsize>
      </font>
     </property>
     <property name="text">
@@ -94,6 +95,12 @@
       <width>141</width>
       <height>71</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Microsoft YaHei</family>
+      <pointsize>10</pointsize>
+     </font>
     </property>
     <property name="styleSheet">
      <string notr="true">background-color:lightgrey;</string>
@@ -155,6 +162,7 @@
     <property name="font">
      <font>
       <family>Microsoft YaHei</family>
+      <pointsize>12</pointsize>
      </font>
     </property>
     <property name="text">
@@ -175,6 +183,12 @@
       <width>141</width>
       <height>71</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Microsoft YaHei</family>
+      <pointsize>10</pointsize>
+     </font>
     </property>
     <property name="styleSheet">
      <string notr="true">background-color:lightgrey;</string>
@@ -274,7 +288,7 @@
     <property name="font">
      <font>
       <family>Microsoft YaHei</family>
-      <pointsize>9</pointsize>
+      <pointsize>11</pointsize>
      </font>
     </property>
     <property name="text">
@@ -284,39 +298,11 @@
      <set>Qt::AlignCenter</set>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>530</y>
-      <width>141</width>
-      <height>32</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <family>Microsoft YaHei</family>
-      <pointsize>10</pointsize>
-     </font>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">background-color:white</string>
-    </property>
-    <property name="text">
-     <string>官网/社区</string>
-    </property>
-    <property name="autoDefault">
-     <bool>false</bool>
-    </property>
-    <property name="flat">
-     <bool>true</bool>
-    </property>
-   </widget>
    <widget class="QLabel" name="label_6">
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>570</y>
+      <y>560</y>
       <width>141</width>
       <height>20</height>
      </rect>
@@ -324,7 +310,7 @@
     <property name="font">
      <font>
       <family>Microsoft YaHei</family>
-      <pointsize>8</pointsize>
+      <pointsize>9</pointsize>
      </font>
     </property>
     <property name="text">
@@ -338,7 +324,7 @@
     <property name="geometry">
      <rect>
       <x>20</x>
-      <y>585</y>
+      <y>580</y>
       <width>141</width>
       <height>21</height>
      </rect>
@@ -346,7 +332,7 @@
     <property name="font">
      <font>
       <family>Microsoft YaHei</family>
-      <pointsize>8</pointsize>
+      <pointsize>9</pointsize>
      </font>
     </property>
     <property name="text">
@@ -368,7 +354,7 @@
     <property name="font">
      <font>
       <family>Microsoft YaHei</family>
-      <pointsize>7</pointsize>
+      <pointsize>8</pointsize>
      </font>
     </property>
     <property name="text">

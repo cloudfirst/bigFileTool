@@ -31,12 +31,20 @@ Page_downloading::Page_downloading(QWidget *parent) :
 Page_downloading::~Page_downloading()
 {
     delete ui;
-    m_Timer->stop();
-    delete  m_Timer;
+    this->stop_download_status_timer();
     for (int i=0; i<this->http_client_array.size(); ++i)
     {
         http_client_array.at(i)->downloading_process->kill();
         delete  http_client_array.at(i);
+    }
+}
+
+void Page_downloading::stop_download_status_timer()
+{
+    if (m_Timer != NULL) {
+        m_Timer->stop();
+        delete m_Timer;
+        m_Timer = NULL;
     }
 }
 
@@ -95,8 +103,6 @@ void Page_downloading::MyTimerSlot()
     {
         Downloading_Task *dt = http_client_array.at(i);
         QString fname = dt->downloading_file_name;
-        // get current file size
-        // uint64_t new_size = dt->size_in_5s.last() + 10 * (qrand() % ((9 + 1) - 1) + 1);
         uint64_t new_size = getCurrentFileSize(dt->downloading_file_name);
 
         dt->size_in_5s.pop_front();
@@ -114,14 +120,21 @@ void Page_downloading::MyTimerSlot()
         }
 
         // update tableWidget
-        mypgb = (QProgressBar*)t->cellWidget(i, 3); // update progress bar
+        int row = dt->row_in_tableWidge;
+
+        item = t->item(row, 2);
+        QString _f_len_s = MyTool::converFileSizeToKBMBGB(new_size) + " / " + \
+                MyTool::converFileSizeToKBMBGB(dt->total_len);
+        item->setText(_f_len_s);
+
+        mypgb = (QProgressBar*)t->cellWidget(row, 3); // update progress bar
         mypgb->setValue(percentage);
 
-        item = t->item(dt->row_in_tableWidge, 4);  // update speed
+        item = t->item(row, 4);  // update speed
         QString _txt = MyTool::converFileSizeToKBMBGB((qint64)bps) + "/s" ;
         item->setText(_txt);
 
-        item = t->item(dt->row_in_tableWidge, 5);  // update time left
+        item = t->item(row, 5);  // update time left
         item->setText("剩余 " +  convertSencond2HHMMSS(letf_seconds));
     }
 }
@@ -194,15 +207,19 @@ void Page_downloading::init_table()
                 t->setItem(t->rowCount()-1, col, i);
             }
             if (col == 2 ) {  //文件大小
-                i->setText(MyTool::converFileSizeToKBMBGB(obj["file_size"].toDouble()));
+                i->setText( MyTool::converFileSizeToKBMBGB(c_size) + \
+                            " / " + \
+                            MyTool::converFileSizeToKBMBGB(obj["file_size"].toDouble()));
                 t->setItem(t->rowCount()-1, col, i);
             }
             if (col == 3 ) {  //progress bar
-                //i->setText("stopped");
                 QProgressBar *pgbar = new QProgressBar();
                 pgbar->setRange(0,100);
 
                 int percentage = c_size * 100 / obj["file_size"].toDouble();
+                if (percentage > 100) {
+                    percentage = 100;
+                }
                 pgbar->setValue(percentage);
 
                 t->setCellWidget(t->rowCount()-1, col, pgbar);
@@ -212,7 +229,7 @@ void Page_downloading::init_table()
                 t->setItem(t->rowCount()-1, col, i);
             }
             if (col == 5 ) { //剩余时间
-                i->setText("0:0:0");
+                i->setText("剩余 0:0:0");
                 t->setItem(t->rowCount()-1, col, i);
             }
 
@@ -280,8 +297,8 @@ void Page_downloading::resizeEvent(QResizeEvent *e)
     t->resize(w, h);
 
     t->setColumnWidth(0, 35);
-    t->setColumnWidth(1, t->width()/4); //file name
-    t->setColumnWidth(2, 80);           //file size
+    t->setColumnWidth(1, t->width()/5); //file name
+    t->setColumnWidth(2, t->width()/5); //file size
     t->setColumnWidth(3, t->width()/5); //progress bar
     t->setColumnWidth(4, t->width()/5); //download speed
     t->setColumnWidth(5, t->width()/5); //time left
@@ -298,8 +315,7 @@ void Page_downloading::on_bt_pause_all_clicked()
     {
         http_client_array.at(i)->downloading_process->kill();
     }
-    this->m_Timer->stop();
-    this->m_Timer = NULL;
+    this->stop_download_status_timer();
 }
 
 void Page_downloading::on_bt_start_all_clicked()
@@ -343,6 +359,7 @@ void Page_downloading::add_new_download_task(QString data)
         // add item into widget
         QTableWidget * t = ui->tableWidget;
         t->insertRow(t->rowCount());
+
         int n_cols = 4;
         for (int col=0; col!=n_cols; ++col)
         {
@@ -366,7 +383,6 @@ void Page_downloading::add_new_download_task(QString data)
                 t->setItem(t->rowCount()-1, col, i);
             }
             if (col == 3 ) {  //progress bar
-                //i->setText("stopped");
                 QProgressBar *pgbar = new QProgressBar();
                 pgbar->setRange(0,100);
                 pgbar->setValue(0);
@@ -377,7 +393,7 @@ void Page_downloading::add_new_download_task(QString data)
                 t->setItem(t->rowCount()-1, col, i);
             }
             if (col == 5 ) { //剩余时间
-                i->setText("0:0:0");
+                i->setText("剩余 0:0:0");
                 t->setItem(t->rowCount()-1, col, i);
             }
 
@@ -515,8 +531,7 @@ void Page_downloading::on_bt_delete_clicked()
         QFile::remove(inf);
 
         if (getNumberOfRuningTasks() == 0) {
-            m_Timer->stop();
-            m_Timer = NULL;
+            this->stop_download_status_timer();
         }
     } else {
 

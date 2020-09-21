@@ -34,6 +34,7 @@ public:
 protected:
     virtual void resizeEvent(QResizeEvent *e) override;
     void start_download_status_timer();
+    void stop_download_status_timer();
     int getNumberOfRuningTasks();
 
 public slots:
