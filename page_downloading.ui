@@ -29,6 +29,11 @@
     <property name="text">
      <string>选择</string>
     </property>
+    <property name="font">
+     <font>
+      <family>Microsoft YaHei</family>
+     </font>
+    </property>
     <property name="background">
      <color>
       <red>218</red>
@@ -40,6 +45,12 @@
    <column>
     <property name="text">
      <string>文件名</string>
+    </property>
+    <property name="font">
+     <font>
+      <family>Microsoft YaHei</family>
+      <pointsize>9</pointsize>
+     </font>
     </property>
     <property name="background">
      <color>
@@ -53,6 +64,12 @@
     <property name="text">
      <string>大小</string>
     </property>
+    <property name="font">
+     <font>
+      <family>Microsoft YaHei</family>
+      <pointsize>9</pointsize>
+     </font>
+    </property>
     <property name="background">
      <color>
       <red>218</red>
@@ -63,7 +80,48 @@
    </column>
    <column>
     <property name="text">
-     <string>状态</string>
+     <string>进度</string>
+    </property>
+    <property name="font">
+     <font>
+      <family>Microsoft YaHei</family>
+      <pointsize>9</pointsize>
+     </font>
+    </property>
+    <property name="background">
+     <color>
+      <red>218</red>
+      <green>218</green>
+      <blue>218</blue>
+     </color>
+    </property>
+   </column>
+   <column>
+    <property name="text">
+     <string>下载速度</string>
+    </property>
+    <property name="font">
+     <font>
+      <family>Microsoft YaHei</family>
+     </font>
+    </property>
+    <property name="background">
+     <color>
+      <red>218</red>
+      <green>218</green>
+      <blue>218</blue>
+     </color>
+    </property>
+   </column>
+   <column>
+    <property name="text">
+     <string>剩余时间</string>
+    </property>
+    <property name="font">
+     <font>
+      <family>Microsoft YaHei</family>
+      <pointsize>9</pointsize>
+     </font>
     </property>
     <property name="background">
      <color>
@@ -83,6 +141,12 @@
      <height>32</height>
     </rect>
    </property>
+   <property name="font">
+    <font>
+     <family>Microsoft YaHei</family>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
    <property name="text">
     <string>全部暂停</string>
    </property>
@@ -96,6 +160,12 @@
      <height>32</height>
     </rect>
    </property>
+   <property name="font">
+    <font>
+     <family>Microsoft YaHei</family>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
    <property name="text">
     <string>全部开始</string>
    </property>
@@ -105,9 +175,15 @@
     <rect>
      <x>570</x>
      <y>20</y>
-     <width>51</width>
+     <width>71</width>
      <height>32</height>
     </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Microsoft YaHei</family>
+     <pointsize>10</pointsize>
+    </font>
    </property>
    <property name="text">
     <string>删除</string>
@@ -117,7 +193,7 @@
    <property name="geometry">
     <rect>
      <x>1</x>
-     <y>70</y>
+     <y>69</y>
      <width>511</width>
      <height>21</height>
     </rect>
@@ -138,6 +214,12 @@
      <height>32</height>
     </rect>
    </property>
+   <property name="font">
+    <font>
+     <family>Microsoft YaHei</family>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
    <property name="text">
     <string>添加</string>
    </property>
@@ -151,6 +233,12 @@
      <height>32</height>
     </rect>
    </property>
+   <property name="font">
+    <font>
+     <family>Microsoft YaHei</family>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
    <property name="text">
     <string>开始</string>
    </property>
@@ -160,9 +248,15 @@
     <rect>
      <x>495</x>
      <y>20</y>
-     <width>61</width>
+     <width>71</width>
      <height>32</height>
     </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Microsoft YaHei</family>
+     <pointsize>10</pointsize>
+    </font>
    </property>
    <property name="text">
     <string>暂停</string>

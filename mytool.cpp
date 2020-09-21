@@ -43,6 +43,8 @@ void MyTool::close_bft_env()
 
 QString MyTool::getNodeIPV4()
 {
+    return "10.244.18.120";
+
     const QHostAddress &localhost = QHostAddress(QHostAddress::LocalHost);
     for (const QHostAddress &address: QNetworkInterface::allAddresses())
     {

@@ -22,6 +22,11 @@
      <height>51</height>
     </rect>
    </property>
+   <property name="font">
+    <font>
+     <family>Microsoft YaHei</family>
+    </font>
+   </property>
    <property name="styleSheet">
     <string notr="true">background-color:white</string>
    </property>
@@ -41,6 +46,12 @@
      <height>16</height>
     </rect>
    </property>
+   <property name="font">
+    <font>
+     <family>Microsoft YaHei</family>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
    <property name="text">
     <string>共享链接</string>
    </property>
@@ -54,6 +65,12 @@
      <height>16</height>
     </rect>
    </property>
+   <property name="font">
+    <font>
+     <family>Microsoft YaHei</family>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
    <property name="text">
     <string>共享密码</string>
    </property>
@@ -66,6 +83,11 @@
      <width>151</width>
      <height>31</height>
     </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Microsoft YaHei</family>
+    </font>
    </property>
    <property name="styleSheet">
     <string notr="true">background-color:white</string>
@@ -83,6 +105,12 @@
      <height>32</height>
     </rect>
    </property>
+   <property name="font">
+    <font>
+     <family>Microsoft YaHei</family>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
    <property name="text">
     <string>拷贝</string>
    </property>
@@ -96,6 +124,12 @@
      <height>32</height>
     </rect>
    </property>
+   <property name="font">
+    <font>
+     <family>Microsoft YaHei</family>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
    <property name="text">
     <string>退出</string>
    </property>
@@ -104,14 +138,15 @@
    <property name="geometry">
     <rect>
      <x>140</x>
-     <y>20</y>
+     <y>30</y>
      <width>341</width>
      <height>16</height>
     </rect>
    </property>
    <property name="font">
     <font>
-     <pointsize>18</pointsize>
+     <family>Microsoft YaHei</family>
+     <pointsize>12</pointsize>
     </font>
    </property>
    <property name="text">
@@ -141,10 +176,16 @@
    <property name="geometry">
     <rect>
      <x>140</x>
-     <y>40</y>
+     <y>50</y>
      <width>331</width>
      <height>16</height>
     </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Microsoft YaHei</family>
+     <pointsize>10</pointsize>
+    </font>
    </property>
    <property name="text">
     <string>快通过QQ，微信，邮件等方式分析给好友把</string>

@@ -6,10 +6,19 @@
 #include "http_thread.h"
 #include <QList>
 #include <QProcess>
+#include <QTimer>
 
 namespace Ui {
 class Page_downloading;
 }
+
+struct Downloading_Task {
+    QProcess *downloading_process;
+    QString  downloading_file_name;
+    QList<uint64_t> size_in_5s;
+    uint64_t total_len;
+    int      row_in_tableWidge;
+};
 
 class Page_downloading : public QWidget
 {
@@ -24,10 +33,13 @@ public:
 
 protected:
     virtual void resizeEvent(QResizeEvent *e) override;
+    void start_download_status_timer();
+    void stop_download_status_timer();
+    int getNumberOfRuningTasks();
 
 public slots:
+    void MyTimerSlot();
     void add_new_download_task(QString data);
-    void update_download_task(QString fname, quint64 len, quint64 total);
 
 private slots:
     void on_bt_pause_all_clicked();
@@ -46,7 +58,9 @@ private slots:
 
 private:
     Ui::Page_downloading *ui;
-    QList<QProcess*> http_client_array;
+    QList<Downloading_Task*> http_client_array;
+    QTimer * m_Timer;
+    int    max_download_tasks;
 
 };
 

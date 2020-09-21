@@ -85,6 +85,7 @@
 #include <sys/stat.h>
 
 #include "civetweb.h"
+#include "../../../oxfold/include/oxfold_wrapper.h"
 
 #undef printf
 #define printf                                                                 \
@@ -1208,6 +1209,8 @@ run_client(const char *url_arg, const char *dst_file_arg)
 
 		/* Wait for server to respond with a HTTP header */
 		ret = mg_get_response(conn, ebuf, sizeof(ebuf), 10000);
+		fprintf(stdout, "============ get response ============");
+		fprintf(stdout, "%s\n", ebuf);
 
 		if (ret >= 0) {
 			const struct mg_response_info *ri = mg_get_response_info(conn);
@@ -1220,12 +1223,13 @@ run_client(const char *url_arg, const char *dst_file_arg)
 			/* Respond reader read. Read body (if any) */
 			ret = mg_read(conn, buf, sizeof(buf));
 			while (ret > 0) {
+				fprintf(stdout, "================== read %d bytes ==================\n", ret);
                 //fwrite(buf, 1, (unsigned)ret, stdout);
                 fwrite(buf, 1, (unsigned)ret, f);
 				ret = mg_read(conn, buf, sizeof(buf));
 			}
 
-			fprintf(stdout, "Closing connection to %s\n", host);
+			fprintf(stdout, "Closing connection to %s\n because ret = %d", host, ret);
             fclose(f);
 
 		} else {
@@ -1316,15 +1320,6 @@ start_civetweb(int argc, char *argv[])
 		exit(mg_modify_passwords_file(argv[2], argv[3], argv[4], NULL)
 		         ? EXIT_SUCCESS
 		         : EXIT_FAILURE);
-	}
-
-	/* Client mode */
-    if (argc > 1 && !strcmp(argv[1], "-C") &&  !strcmp(argv[3], "-D")) {
-        if (argc != 5) {
-			show_usage_and_exit(argv[0]);
-		}
-
-        exit(run_client(argv[2], argv[4]) ? EXIT_SUCCESS : EXIT_FAILURE);
 	}
 
 	/* Call Lua with additional CivetWeb specific Lua functions, if -L option
@@ -3248,28 +3243,72 @@ main(int argc, char *argv[])
 int
 main(int argc, char *argv[])
 {
-	init_server_name();
-	init_system_info();
-	start_civetweb(argc, argv);
-	fprintf(stdout,
-	        "%s started on port(s) %s with web root [%s]\n",
-	        g_server_name,
-	        mg_get_option(g_ctx, "listening_ports"),
-	        mg_get_option(g_ctx, "document_root"));
+    int ret;
 
-	while (g_exit_flag == 0) {
-		sleep(1);
-	}
+    // check run in client mode or server mode by argv
+    if (argc > 1 && !strcmp(argv[1], "-C") &&  !strcmp(argv[3], "-D") && !strcmp(argv[5], "-Z"))
+    {
+        if (argc != 7) {
+            show_usage_and_exit(argv[0]);
+        }
 
-	fprintf(stdout,
-	        "Exiting on signal %d, waiting for all threads to finish...",
-	        g_exit_flag);
-	fflush(stdout);
-	stop_civetweb();
-	fprintf(stdout, "%s", " done.\n");
+        fprintf(stdout, "start oxfold service...");
+        ret = start_oxfold(argv[6]);
+        if (ret != 0) {
+            fprintf(stdout, "init oxfold environment failed, exit now.");
+            return EXIT_FAILURE;
+        } else {
+            init_server_name();
+            init_system_info();
 
-	free_system_info();
+            ret = run_client(argv[2], argv[4]);
 
-	return EXIT_SUCCESS;
+            free_system_info();
+			fprintf(stdout, "stop oxfold service...");
+            stop_oxfold();
+
+            return EXIT_SUCCESS;
+        }
+    }
+    else
+    {
+        // server mode
+        fprintf(stdout, "start oxfold service...");
+        ret = start_oxfold(NULL);
+        if (ret != 0 ) {
+            fprintf(stdout, "init oxfold environment failed, exit now.");
+            return EXIT_FAILURE;
+        } else {
+            init_server_name();
+            init_system_info();
+            start_civetweb(argc, argv);
+            fprintf(stdout,
+                    "%s started on port(s) %s with web root [%s]\n",
+                    g_server_name,
+                    mg_get_option(g_ctx, "listening_ports"),
+                    mg_get_option(g_ctx, "document_root"));
+
+            while (g_exit_flag == 0) {
+                sleep(1);
+            }
+
+            fprintf(stdout,
+                    "Exiting on signal %d, waiting for all threads to finish...",
+                    g_exit_flag);
+            fflush(stdout);
+            stop_civetweb();
+            fprintf(stdout, "%s", " done.\n");
+
+            free_system_info();
+			fprintf(stdout, "stop oxfold service...");
+            stop_oxfold();
+
+            return EXIT_SUCCESS;
+        }
+    }
+
+
+
+
 }
 
