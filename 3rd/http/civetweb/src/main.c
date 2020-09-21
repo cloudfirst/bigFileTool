@@ -1198,14 +1198,23 @@ run_client(const char *url_arg, const char *dst_file_arg)
 
 		fprintf(stdout, "Connected to %s\n", host);
 
+		/* prepare range header */
+		struct stat st;
+		uint64_t  offset = 0;
+		if (0 == stat(dst_file_arg, &st)) 
+		{
+			offset = (uint64_t)st.st_size;
+		}
 		/* Send GET request */
 		mg_printf(conn,
 		          "GET /%s HTTP/1.1\r\n"
 		          "Host: %s\r\n"
 		          "Connection: close\r\n"
+				  "Range: bytes=%lld-\r\n",
 		          "\r\n",
 		          resource,
-		          host);
+		          host,
+                  offset);
 
 		/* Wait for server to respond with a HTTP header */
 		ret = mg_get_response(conn, ebuf, sizeof(ebuf), 10000);
@@ -1215,6 +1224,7 @@ run_client(const char *url_arg, const char *dst_file_arg)
 		if (ret >= 0) {
 			const struct mg_response_info *ri = mg_get_response_info(conn);
             FILE *f = fopen(dst_file_arg, "ab");
+			fseeko(f, offset, SEEK_SET);
 			fprintf(stdout,
 			        "Response info: %i %s\n",
 			        ri->status_code,

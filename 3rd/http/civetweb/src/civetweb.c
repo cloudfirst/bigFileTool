@@ -6469,6 +6469,7 @@ push_inner(struct mg_context *ctx,
 
 	/* Try to read until it succeeds, fails, times out, or the server
 	 * shuts down. */
+	int retry_when_zts_send_1 = 10;
 	for (;;) {
 
 #if !defined(NO_SSL)
@@ -6521,9 +6522,13 @@ push_inner(struct mg_context *ctx,
 			if (n < 0) {
 				/* shutdown of the socket at client side */
 				fprintf(stdout, "push_inner:B return -2, since n=%d\n", n);
-				err = 0;
-				n = 0;
-				//return -2;
+				if (retry_when_zts_send_1 > 0) {
+					err = 0;
+					n = 0;
+					retry_when_zts_send_1 -= 1;
+				} else {
+					return -2;
+				}
 			}
 		}
 
