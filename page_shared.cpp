@@ -79,7 +79,7 @@ Page_shared::~Page_shared()
 
 void Page_shared::init_table()
 {
-    QStringList header_title = { " ","文件名", "大小", "修改时间", "" };
+    //QStringList header_title = { " ","文件名", "大小", "修改时间", "" };
     QTableWidget * t = ui->shared_file_tableWidget;
 
     t->verticalHeader()->setVisible(false);
@@ -152,26 +152,50 @@ void Page_shared::resizeEvent(QResizeEvent *e)
 void Page_shared::on_shared_file_tableWidget_itemClicked(QTableWidgetItem *item)
 {
     QTableWidget * t = ui->shared_file_tableWidget;
+    int clicked_row = item->row();
+    int pre_row = -1;
     const int n_rows = t->rowCount();
+    QItemSelectionModel *select = t->selectionModel();
+    QModelIndexList  rows;
+
+    // get previously selected row
     for (int row=0; row!=n_rows; ++row)
     {
         QTableWidgetItem *  i = t->item(row, 0);
-        i->setCheckState(Qt::Unchecked);
+        Qt::CheckState s = i->checkState();
+        if (s == Qt::Checked) {
+            pre_row = row;
+            break;
+        }
     }
 
-    int row = item->row();
-    QTableWidgetItem *  i = t->item(row, 0);
-    Qt::CheckState s = i->checkState();
-    if (s == Qt::Unchecked) {
-        i->setCheckState(Qt::Checked);
-        ui->bt_delete_share->setVisible(true);
-        ui->bt_share_file->setVisible(true);
-    }else {
-        i->setCheckState(Qt::Unchecked);
-        ui->bt_delete_share->setVisible(false);
-        ui->bt_share_file->setVisible(false);
+    if (select->hasSelection())  // select row before
+    {
+        if (pre_row == clicked_row) {  //de-select this row
+            QTableWidgetItem *  i = t->item(clicked_row, 0);
+            Qt::CheckState s = i->checkState();
+            if (s == Qt::Unchecked) {
+                i->setCheckState(Qt::Checked);
+                ui->bt_delete_share->setVisible(true);
+                ui->bt_share_file->setVisible(true);
+            } else {
+                i->setCheckState(Qt::Unchecked);
+                t->selectionModel()->clearSelection();
+                ui->bt_delete_share->setVisible(false);
+                ui->bt_share_file->setVisible(false);
+            }
+        } else {  // select a new row
+            // otherwise highlight the clicked row.
+            if (pre_row != -1) {
+                 QTableWidgetItem *  j = t->item(pre_row, 0);
+                 j->setCheckState(Qt::Unchecked);
+            }
+            QTableWidgetItem *  i = t->item(clicked_row, 0);
+            i->setCheckState(Qt::Checked);
+            ui->bt_delete_share->setVisible(true);
+            ui->bt_share_file->setVisible(true);
+        }
     }
-
 }
 
 void Page_shared::mklink(QString target, QString link)

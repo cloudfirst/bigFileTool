@@ -39,11 +39,11 @@ protected:
     void start_download_status_timer();
     void stop_download_status_timer();
     int getNumberOfRuningTasks();
+    bool b_destroy;
 
 public slots:
     void MyTimerSlot();
     void add_new_download_task(QString data);
-    bool b_destroy;
 
 private slots:
     void on_bt_pause_all_clicked();

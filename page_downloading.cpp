@@ -28,6 +28,10 @@ Page_downloading::Page_downloading(QWidget *parent) :
     this->m_Timer = NULL;
     this->max_download_tasks = 1;
     this->b_destroy = false;
+
+    ui->bt_delete->setVisible(false);
+    ui->bt_start_one->setVisible(false);
+    ui->bt_pause_one->setVisible(false);
 }
 
 Page_downloading::~Page_downloading()
@@ -519,26 +523,52 @@ void Page_downloading::On_client_process_finished(QString fname)
 void Page_downloading::on_tableWidget_itemClicked(QTableWidgetItem *item)
 {
     QTableWidget * t = ui->tableWidget;
+    int clicked_row = item->row();
+    int pre_row = -1;
     const int n_rows = t->rowCount();
+    QItemSelectionModel *select = t->selectionModel();
+    QModelIndexList  rows;
+
+    // get previously selected row
     for (int row=0; row!=n_rows; ++row)
     {
         QTableWidgetItem *  i = t->item(row, 0);
-        i->setCheckState(Qt::Unchecked);
+        Qt::CheckState s = i->checkState();
+        if (s == Qt::Checked) {
+            pre_row = row;
+            break;
+        }
     }
 
-    int row = item->row();
-    QTableWidgetItem *  i = t->item(row, 0);
-    Qt::CheckState s = i->checkState();
-    if (s == Qt::Unchecked) {
-        i->setCheckState(Qt::Checked);
-        ui->bt_delete->setVisible(true);
-        ui->bt_start_one->setVisible(true);
-        ui->bt_pause_one->setVisible(true);
-    }else {
-        i->setCheckState(Qt::Unchecked);
-        ui->bt_delete->setVisible(false);
-        ui->bt_start_one->setVisible(false);
-        ui->bt_pause_one->setVisible(false);
+    if (select->hasSelection())  // select row before
+    {
+        if (pre_row == clicked_row) {  //de-select this row
+            QTableWidgetItem *  i = t->item(clicked_row, 0);
+            Qt::CheckState s = i->checkState();
+            if (s == Qt::Unchecked) {
+                i->setCheckState(Qt::Checked);
+                ui->bt_delete->setVisible(true);
+                ui->bt_start_one->setVisible(true);
+                ui->bt_pause_one->setVisible(true);
+            } else {
+                i->setCheckState(Qt::Unchecked);
+                t->selectionModel()->clearSelection();
+                ui->bt_delete->setVisible(false);
+                ui->bt_start_one->setVisible(false);
+                ui->bt_pause_one->setVisible(false);
+            }
+        } else {  // select a new row
+            // otherwise highlight the clicked row.
+            if (pre_row != -1) {
+                 QTableWidgetItem *  j = t->item(pre_row, 0);
+                 j->setCheckState(Qt::Unchecked);
+            }
+            QTableWidgetItem *  i = t->item(clicked_row, 0);
+            i->setCheckState(Qt::Checked);
+            ui->bt_delete->setVisible(true);
+            ui->bt_start_one->setVisible(true);
+            ui->bt_pause_one->setVisible(true);
+        }
     }
 }
 
