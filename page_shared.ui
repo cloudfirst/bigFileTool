@@ -61,6 +61,12 @@
     <property name="text">
      <string>选择</string>
     </property>
+    <property name="font">
+     <font>
+      <family>Microsoft YaHei</family>
+      <pointsize>9</pointsize>
+     </font>
+    </property>
     <property name="background">
      <color>
       <red>218</red>
@@ -72,6 +78,12 @@
    <column>
     <property name="text">
      <string>文件名</string>
+    </property>
+    <property name="font">
+     <font>
+      <family>Microsoft YaHei</family>
+      <pointsize>9</pointsize>
+     </font>
     </property>
     <property name="background">
      <color>
@@ -85,6 +97,12 @@
     <property name="text">
      <string>文件大小</string>
     </property>
+    <property name="font">
+     <font>
+      <family>Microsoft YaHei</family>
+      <pointsize>9</pointsize>
+     </font>
+    </property>
     <property name="background">
      <color>
       <red>218</red>
@@ -96,6 +114,12 @@
    <column>
     <property name="text">
      <string>修改时间</string>
+    </property>
+    <property name="font">
+     <font>
+      <family>Microsoft YaHei</family>
+      <pointsize>9</pointsize>
+     </font>
     </property>
     <property name="background">
      <color>
@@ -186,6 +210,12 @@
      <horstretch>0</horstretch>
      <verstretch>0</verstretch>
     </sizepolicy>
+   </property>
+   <property name="font">
+    <font>
+     <family>Microsoft YaHei</family>
+     <pointsize>10</pointsize>
+    </font>
    </property>
    <property name="styleSheet">
     <string notr="true">background-color:white</string>

@@ -38,7 +38,7 @@ Page_shared::Page_shared(QWidget *parent) :
          exe_path = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\webtool\\oxfold-webtool.exe";
          QStringList args = {
              "-document_root",
-             QDir::toNativeSeparators((QDir::homePath()) + "\\oxfold\\bigfiletool\\shared"
+             QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\shared"
          };
     #else
         exe_path = QDir::homePath() + "/oxfold/webtool/oxfold-webtool";
