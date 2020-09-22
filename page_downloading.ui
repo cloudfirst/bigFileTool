@@ -31,7 +31,8 @@
     </property>
     <property name="font">
      <font>
-      <family>Microsoft YaHei</family>
+      <family>.AppleSystemUIFont</family>
+      <pointsize>9</pointsize>
      </font>
     </property>
     <property name="background">
@@ -102,7 +103,8 @@
     </property>
     <property name="font">
      <font>
-      <family>Microsoft YaHei</family>
+      <family>.AppleSystemUIFont</family>
+      <pointsize>9</pointsize>
      </font>
     </property>
     <property name="background">
