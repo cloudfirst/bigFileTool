@@ -14,10 +14,13 @@ class Page_downloading;
 
 struct Downloading_Task {
     QProcess *downloading_process;
+    QString       exe_path;
+    QStringList   proc_args;
     QString  downloading_file_name;
     QList<uint64_t> size_in_5s;
     uint64_t total_len;
     int      row_in_tableWidge;
+    bool     is_manually_stopped;
 };
 
 class Page_downloading : public QWidget
@@ -40,6 +43,7 @@ protected:
 public slots:
     void MyTimerSlot();
     void add_new_download_task(QString data);
+    bool b_destroy;
 
 private slots:
     void on_bt_pause_all_clicked();

@@ -1,7 +1,5 @@
 #include "mytool.h"
 
-QString MyTool::http_server_ip = "0.0.0.0";
-
 MyTool::MyTool(QObject *parent) : QObject(parent)
 {
 
@@ -38,18 +36,38 @@ void MyTool::init_bft_env()
 
 void MyTool::close_bft_env()
 {
-
+#if defined(_WIN32)
+    QString sipfile(QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\myrouter\\webserver.txt");
+#else
+    QString sipfile(QDir::homePath() + "/oxfold/bigfiletool/myrouter/webserver.txt");
+#endif
+    QFile::remove(sipfile);
 }
 
 QString MyTool::getNodeIPV4()
 {
-    return "10.244.18.120";
-
-    const QHostAddress &localhost = QHostAddress(QHostAddress::LocalHost);
-    for (const QHostAddress &address: QNetworkInterface::allAddresses())
-    {
-        if (address.protocol() == QAbstractSocket::IPv4Protocol && address != localhost)
-             return address.toString();
+    // const QHostAddress &localhost = QHostAddress(QHostAddress::LocalHost);
+    // for (const QHostAddress &address: QNetworkInterface::allAddresses())
+    // {
+    //     if (address.protocol() == QAbstractSocket::IPv4Protocol && address != localhost)
+    //          return address.toString();
+    // }
+#if defined(_WIN32)
+    QString sipfile(QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\myrouter\\webserver.txt");
+#else
+    QString sipfile(QDir::homePath() + "/oxfold/bigfiletool/myrouter/webserver.txt");
+#endif
+    QFile f(sipfile);
+    if (!f.exists()) {
+        return "0.0.0.0";
+    } else {
+        if (!f.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            return "";
+        } else {
+            QByteArray ba = f.readAll();
+            QString sip = QString::fromStdString(ba.toStdString());
+            return sip;
+        }
     }
 }
 

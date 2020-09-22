@@ -6,6 +6,8 @@
 #include <QDebug>
 #include <QJsonObject>
 #include <QJsonDocument>
+#include <QMessageBox>
+
 #include "sharing_dialog.h"
 #include "encrypt/simple_encrypt.h"
 #include "mytool.h"
@@ -22,9 +24,9 @@ Page_shared::Page_shared(QWidget *parent) :
     ui->setupUi(this);
     ui->bt_delete_share->setVisible(false);
     ui->bt_share_file->setVisible(false);
-    this->m_Timer = NULL;
 
     b_start_webserver_auto = true;
+    b_destroy = false;
 
     this->init_table();
 
@@ -34,49 +36,43 @@ Page_shared::Page_shared(QWidget *parent) :
         QString exe_path;
     #if defined(_WIN32)
          exe_path = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\webtool\\oxfold-webtool.exe";
-         QStringList args = {"-document_root",
-                             QDir::toNativeSeparators((QDir::homePath()) + "\\oxfold\\bigfiletool\\shared").toStdString().c_str()
-                            };
+         QStringList args = {
+             "-document_root",
+             QDir::toNativeSeparators((QDir::homePath()) + "\\oxfold\\bigfiletool\\shared"
+         };
     #else
         exe_path = QDir::homePath() + "/oxfold/webtool/oxfold-webtool";
-        QStringList args = {"-document_root",
-                            (QDir::homePath() + "/oxfold/bigfiletool/shared").toStdString().c_str(),
-                           };
+        QStringList args = {
+             "-document_root",
+             QDir::homePath() + "/oxfold/bigfiletool/shared"
+        };
     #endif
 
         p_http_server->setProgram(exe_path);
         p_http_server->setArguments(args);
-        connect(p_http_server, SIGNAL(readyReadStandardOutput()), this, SLOT(rightMessage()) );
         p_http_server->start();
-        start_download_status_timer();
+
+        connect(p_http_server, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+            [=](int exitCode, QProcess::ExitStatus exitStatus)
+        {
+            On_http_server_finished();
+        });
     }
 }
 
-void Page_shared::start_download_status_timer()
+void Page_shared::On_http_server_finished()
 {
-    if (m_Timer == NULL) {
-        m_Timer = new QTimer(this);
-        connect(m_Timer, SIGNAL(timeout()),this, SLOT(MyTimerSlot()));
-    }
-    m_Timer->start(1000*60);
-}
+    if (b_destroy) return;
 
-void Page_shared::MyTimerSlot()
-{
-    // check status of p_http_server, and restart it if stopped.
-    if (p_http_server->state() == QProcess::NotRunning) {
+    if (p_http_server->state() != QProcess::Running) {
         p_http_server->start();
     }
 }
 
-void Page_shared::rightMessage()
-{
-    QByteArray strdata = p_http_server->readAllStandardOutput();
-    MyTool::http_server_ip =  QString(strdata);
-}
 
 Page_shared::~Page_shared()
 {
+    b_destroy = true;
     delete ui;
     p_http_server->kill();
 }
@@ -278,11 +274,14 @@ QString my_randString(int len)
 // sharing link looks like http://ip:8080/filename.ext
 void Page_shared::on_bt_share_file_clicked()
 {
-#if defined (ENABLE_OXFOLD)
-    QString host_ip = MyTool::http_server_ip;
-#else
     QString host_ip = MyTool::getNodeIPV4();
-#endif
+    if (host_ip == "0.0.0.0") {
+        QMessageBox msgBox;
+        msgBox.setText("请稍候，等内置的web服务启动后再点击分享。");
+        msgBox.exec();
+        return;
+    }
+
     int     port = 8080;
     QString file_name;
     qint64  file_size;
