@@ -18,22 +18,19 @@ MainWindow::MainWindow(QWidget *parent)
     //start oxfold network service
     MyTool::init_bft_env();
 
-    QWidget * page1 = new Page_shared();
+    Page_shared * page1 = new Page_shared();
     ui->stackedWidget->addWidget(page1);
 
-    QWidget * page2 = new Page_sharing();
+    Page_sharing * page2 = new Page_sharing();
     ui->stackedWidget->addWidget(page2);
 
-    QWidget * page3 = new Page_downloading();
+    Page_downloading * page3 = new Page_downloading();
     ui->stackedWidget->addWidget(page3);
 
-    QWidget * page4 = new Page_downloaded();
+    Page_downloaded * page4 = new Page_downloaded();
     ui->stackedWidget->addWidget(page4);
 
-    //start http server
-    // QString node_ip = MyTool::getNodeIPV4();
-    // QString root = QDir::homePath() + "/oxfold/bigfiletool/shared";
-
+    connect(page3, SIGNAL(download_task_finished(QString)), page4, SLOT(add_new_row(QString)));
 }
 
 MainWindow::~MainWindow()

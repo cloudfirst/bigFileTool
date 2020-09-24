@@ -34,6 +34,7 @@ Page_downloading::Page_downloading(QWidget *parent) :
     ui->bt_pause_one->setVisible(false);
 }
 
+
 Page_downloading::~Page_downloading()
 {
     b_destroy = true;
@@ -136,7 +137,10 @@ void Page_downloading::MyTimerSlot()
         }
 
         mypgb = (QProgressBar*)t->cellWidget(row, 3); // update progress bar
-        mypgb->setValue(percentage);
+        if (mypgb !=NULL) {
+            mypgb->setValue(percentage);
+        }
+
 
         item = t->item(row, 4);  // update speed
         QString _txt = MyTool::converFileSizeToKBMBGB((qint64)bps) + "/s" ;
@@ -479,7 +483,8 @@ void Page_downloading::On_client_process_finished(QString fname)
 
     Downloading_Task *dt = NULL;
     uint64_t new_size = getCurrentFileSize(fname);
-    for (int i=0; i<this->http_client_array.size(); ++i)
+    int i=0;
+    for (i=0; i<this->http_client_array.size(); ++i)
     {
         dt = http_client_array.at(i);
         if (dt->downloading_file_name == fname) {
@@ -498,8 +503,6 @@ void Page_downloading::On_client_process_finished(QString fname)
              proc->start();
          }
     } else {  // downloading is finished, start post_downloading tasks.
-        return;
-
     #if defined(_WIN32)
         QString old_file = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloading\\" + fname + ".downloading";
         QString new_file = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloaded\\" + fname;
@@ -517,6 +520,12 @@ void Page_downloading::On_client_process_finished(QString fname)
     #endif
         // remove downloading info
         QFile(old_info_file).remove();
+
+        QTableWidget * t = ui->tableWidget;
+        t->removeRow(dt->row_in_tableWidge);
+        http_client_array.removeAt(i);
+
+        emit download_task_finished(fname);
     }
 }
 

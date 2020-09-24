@@ -41,6 +41,9 @@ protected:
     int getNumberOfRuningTasks();
     bool b_destroy;
 
+signals:
+    void download_task_finished(QString data);
+
 public slots:
     void MyTimerSlot();
     void add_new_download_task(QString data);
@@ -65,6 +68,7 @@ private:
     QList<Downloading_Task*> http_client_array;
     QTimer * m_Timer;
     int    max_download_tasks;
+    QWidget *page;
 
 };
 
