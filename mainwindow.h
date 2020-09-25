@@ -19,7 +19,6 @@ public:
 
 private slots:
     void on_shareList_itemClicked(QListWidgetItem *item);
-
     void on_download_list_itemClicked(QListWidgetItem *item);
 
 private:

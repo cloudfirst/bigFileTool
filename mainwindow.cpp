@@ -6,14 +6,19 @@
 #include "page_downloaded.h"
 #include "page_downloading.h"
 #include <QResizeEvent>
+#include <QDesktopServices>
+
 #include "mytool.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
+    MyTool::killAllProcess();
+
     ui->setupUi(this);
-    ui->shareList->setCurrentRow(0);
+    //ui->shareList->setCurrentRow(0);
+    ui->download_list->setCurrentRow(0);
 
     //start oxfold network service
     MyTool::init_bft_env();
@@ -31,12 +36,17 @@ MainWindow::MainWindow(QWidget *parent)
     ui->stackedWidget->addWidget(page4);
 
     connect(page3, SIGNAL(download_task_finished(QString)), page4, SLOT(add_new_row(QString)));
+
+    ui->label_website->setOpenExternalLinks(true);
+    ui->label_website->setText("<a href=\"http://www.oxfold.cn\">http://www.oxfold.cn</a>");
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
     MyTool::close_bft_env();
+
+    MyTool::killAllProcess();
 }
 
 void MainWindow::resizeEvent(QResizeEvent *e)
@@ -50,6 +60,8 @@ void MainWindow::resizeEvent(QResizeEvent *e)
     int h = size.height() - point.y();
 
     qw->resize(w, h);
+
+
 }
 
 void MainWindow::on_shareList_itemClicked(QListWidgetItem *item)
@@ -64,6 +76,9 @@ void MainWindow::on_shareList_itemClicked(QListWidgetItem *item)
 
 void MainWindow::on_download_list_itemClicked(QListWidgetItem *item)
 {
+    if (item->text() == "本地文件") {
+        ui->stackedWidget->setCurrentIndex(0);
+    }
     if (item->text() == "正在下载") {
         ui->stackedWidget->setCurrentIndex(2);
     }

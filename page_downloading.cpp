@@ -32,6 +32,9 @@ Page_downloading::Page_downloading(QWidget *parent) :
     ui->bt_delete->setVisible(false);
     ui->bt_start_one->setVisible(false);
     ui->bt_pause_one->setVisible(false);
+
+    ui->bt_pause_all->setVisible(false);
+    ui->bt_start_all->setVisible(false);
 }
 
 

@@ -1,4 +1,5 @@
 #include "mytool.h"
+#include <QProcess>
 
 MyTool::MyTool(QObject *parent) : QObject(parent)
 {
@@ -93,4 +94,15 @@ QString MyTool::converFileSizeToKBMBGB(qint64 filesize)
     }
     szResult += units[i];
     return  szResult;
+}
+
+void MyTool::killAllProcess()
+{
+    QProcess p;
+#if defined(_WIN32)
+    p.start("taskkill /im oxfold-webtool.exe /f");
+#else
+    p.start("pkill oxfold-webtool");
+#endif
+    p.waitForFinished();
 }

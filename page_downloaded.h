@@ -26,6 +26,9 @@ protected:
 
 
 
+private slots:
+    void on_bt_show_directory_clicked();
+
 private:
     Ui::Page_downloaded *ui;
 };

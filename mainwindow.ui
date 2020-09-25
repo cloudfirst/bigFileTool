@@ -62,7 +62,7 @@
      <bool>true</bool>
     </property>
    </widget>
-   <widget class="QLabel" name="label_2">
+   <widget class="QLabel" name="label_3">
     <property name="geometry">
      <rect>
       <x>20</x>
@@ -78,95 +78,7 @@
      </font>
     </property>
     <property name="text">
-     <string>本地共享</string>
-    </property>
-    <property name="margin">
-     <number>5</number>
-    </property>
-    <property name="indent">
-     <number>1</number>
-    </property>
-   </widget>
-   <widget class="QListWidget" name="shareList">
-    <property name="geometry">
-     <rect>
-      <x>30</x>
-      <y>190</y>
-      <width>141</width>
-      <height>71</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <family>Microsoft YaHei</family>
-      <pointsize>10</pointsize>
-     </font>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">background-color:lightgrey;</string>
-    </property>
-    <property name="frameShape">
-     <enum>QFrame::NoFrame</enum>
-    </property>
-    <property name="frameShadow">
-     <enum>QFrame::Plain</enum>
-    </property>
-    <property name="lineWidth">
-     <number>0</number>
-    </property>
-    <property name="autoScroll">
-     <bool>false</bool>
-    </property>
-    <property name="textElideMode">
-     <enum>Qt::ElideLeft</enum>
-    </property>
-    <property name="spacing">
-     <number>6</number>
-    </property>
-    <property name="uniformItemSizes">
-     <bool>false</bool>
-    </property>
-    <property name="selectionRectVisible">
-     <bool>true</bool>
-    </property>
-    <item>
-     <property name="text">
-      <string>共享文件</string>
-     </property>
-     <property name="icon">
-      <iconset resource="res.qrc">
-       <normaloff>:/imgs/shared_files.png</normaloff>
-       <normalon>:/imgs/shared_files.png</normalon>:/imgs/shared_files.png</iconset>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>正在共享</string>
-     </property>
-     <property name="icon">
-      <iconset resource="res.qrc">
-       <normaloff>:/imgs/sharing.png</normaloff>
-       <normalon>:/imgs/sharing.png</normalon>:/imgs/sharing.png</iconset>
-     </property>
-    </item>
-   </widget>
-   <widget class="QLabel" name="label_3">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>260</y>
-      <width>151</width>
-      <height>26</height>
-     </rect>
-    </property>
-    <property name="font">
-     <font>
-      <family>Microsoft YaHei</family>
-      <pointsize>12</pointsize>
-     </font>
-    </property>
-    <property name="text">
-     <string>下载列表</string>
+     <string>分享下载列表</string>
     </property>
     <property name="margin">
      <number>5</number>
@@ -178,10 +90,10 @@
    <widget class="QListWidget" name="download_list">
     <property name="geometry">
      <rect>
-      <x>30</x>
-      <y>300</y>
+      <x>20</x>
+      <y>190</y>
       <width>141</width>
-      <height>71</height>
+      <height>150</height>
      </rect>
     </property>
     <property name="font">
@@ -217,6 +129,16 @@
     <property name="selectionRectVisible">
      <bool>true</bool>
     </property>
+    <item>
+     <property name="text">
+      <string>本地文件</string>
+     </property>
+     <property name="icon">
+      <iconset resource="res.qrc">
+       <normaloff>:/imgs/shared_files.png</normaloff>
+       <normalon>:/imgs/shared_files.png</normalon>:/imgs/shared_files.png</iconset>
+     </property>
+    </item>
     <item>
      <property name="text">
       <string>正在下载</string>
@@ -320,7 +242,7 @@
      <set>Qt::AlignCenter</set>
     </property>
    </widget>
-   <widget class="QLabel" name="label_7">
+   <widget class="QLabel" name="label_website">
     <property name="geometry">
      <rect>
       <x>20</x>
@@ -337,6 +259,9 @@
     </property>
     <property name="text">
      <string>http://www.oxfold.cn</string>
+    </property>
+    <property name="textFormat">
+     <enum>Qt::AutoText</enum>
     </property>
     <property name="alignment">
      <set>Qt::AlignCenter</set>

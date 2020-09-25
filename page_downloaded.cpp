@@ -8,6 +8,8 @@
 #include <QDir>
 #include <QFileInfoList>
 #include <QDateTime>
+#include <QProcess>
+#include <QDesktopServices>
 
 #include "mytool.h"
 
@@ -100,9 +102,19 @@ void Page_downloaded::resizeEvent(QResizeEvent *e)
     t->setColumnWidth(2, t->width()/6); //file size
     t->setColumnWidth(3, t->width()/3); //progress bar
 
-
-
     QSize  lsize = ui->label->size();
     ui->label->resize(size.width(), lsize.height());
 
+}
+
+void Page_downloaded::on_bt_show_directory_clicked()
+{
+#ifdef Q_OS_MAC
+    QProcess::execute("open", QStringList() << QDir::homePath() + "/oxfold/bigfiletool/downloaded/");
+#endif
+
+#ifdef Q_OS_WIN32
+    QString arg = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloaded";
+    QProcess::execute("explore.exe", QStringList() << arg);
+#endif
 }
