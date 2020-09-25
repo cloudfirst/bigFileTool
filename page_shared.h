@@ -38,6 +38,7 @@ private slots:
     void on_shared_file_tableWidget_itemClicked(QTableWidgetItem *item);
     void on_bt_add_share_file_clicked();
     void on_bt_share_file_clicked();
+    void on_bt_delete_share_clicked();
 };
 
 #endif // PAGE_SHARED_H

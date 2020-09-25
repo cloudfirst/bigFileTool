@@ -347,3 +347,27 @@ void Page_shared::on_bt_share_file_clicked()
     dlg.init_data(link, pass_word);
     dlg.exec();
 }
+
+void Page_shared::on_bt_delete_share_clicked()
+{
+    QTableWidget * t = ui->shared_file_tableWidget;
+    QItemSelectionModel *select = t->selectionModel();
+    QModelIndexList  rows;
+    QTableWidgetItem *item;
+
+    if (select->hasSelection())
+    {
+        rows = select->selectedRows();
+        int row = rows.at(0).row();
+        item = t->item(row, 1);
+        QString fname = item->text();
+
+        //delete file in shared directory
+        QFile::remove(MyTool::getSharedDir() + fname);
+        t->removeRow(row);
+    } else {
+        QMessageBox msgBox;
+        msgBox.setText("请先选择一个下载任务!");
+        msgBox.exec();
+    }
+}

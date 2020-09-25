@@ -20,6 +20,12 @@ public:
     static QString http_server_ip;
     static void killAllProcess();
 
+    static QString getSharedDir();
+    static QString getDownloadedDir();
+    static QString getDownloadingDir();
+    static QString getMyrouterCredDir();
+    static QString getClientCredDir();
+    static QString getWebToolDir();
 signals:
 
 };

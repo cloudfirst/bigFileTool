@@ -106,3 +106,63 @@ void MyTool::killAllProcess()
 #endif
     p.waitForFinished();
 }
+
+QString MyTool::getSharedDir()
+{
+#if defined(_WIN32)
+    QString df(QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\shared\\");
+#else
+    QString df(QDir::homePath() + "/oxfold/bigfiletool/shared/");
+#endif
+    return df;
+}
+
+QString MyTool::getDownloadedDir()
+{
+#if defined(_WIN32)
+    QString df(QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloaded\\");
+#else
+    QString df(QDir::homePath() + "/oxfold/bigfiletool/downloaded/");
+#endif
+    return df;
+}
+
+QString MyTool::getDownloadingDir()
+{
+#if defined(_WIN32)
+    QString df(QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloading\\");
+#else
+    QString df(QDir::homePath() + "/oxfold/bigfiletool/downloading/");
+#endif
+    return df;
+}
+
+QString MyTool::getMyrouterCredDir()
+{
+#if defined(_WIN32)
+    QString df(QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\myrouter\\");
+#else
+    QString df(QDir::homePath() + "/oxfold/bigfiletool/myrouter/");
+#endif
+    return df;
+}
+
+ QString MyTool::getClientCredDir()
+ {
+#if defined(_WIN32)
+    QString df(QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\client\\");
+#else
+    QString df(QDir::homePath() + "/oxfold/bigfiletool/client/");
+#endif
+    return df;
+ }
+
+ QString MyTool::getWebToolDir()
+ {
+#if defined(_WIN32)
+    QString df(QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\webtool\\");
+#else
+    QString df(QDir::homePath() + "/oxfold/webtool/");
+#endif
+    return df;
+ }
