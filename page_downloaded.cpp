@@ -61,7 +61,7 @@ void Page_downloaded::init_table()
 
         for (int col=0; col!=n_cols; ++col)
         {
-            QTableWidgetItem * const i = new QTableWidgetItem;
+            QTableWidgetItem * const i = new QTableWidgetItem();
             i->setFlags(i->flags() & ~Qt::ItemIsEditable);
             if (col == 0 ) {
                 //Checkbox
@@ -115,6 +115,6 @@ void Page_downloaded::on_bt_show_directory_clicked()
 
 #ifdef Q_OS_WIN32
     QString arg = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloaded";
-    QProcess::execute("explore.exe", QStringList() << arg);
+    QProcess::execute("explorer.exe", QStringList() << arg);
 #endif
 }

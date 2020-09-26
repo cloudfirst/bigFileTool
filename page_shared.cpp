@@ -103,7 +103,7 @@ void Page_shared::init_table()
 
         for (int col=0; col!=n_cols; ++col)
         {
-            QTableWidgetItem * const i = new QTableWidgetItem;
+            QTableWidgetItem * const i = new QTableWidgetItem();
             i->setFlags(i->flags() & ~Qt::ItemIsEditable);
             if (col == 0 ) {
                 //Checkbox
@@ -238,7 +238,7 @@ void Page_shared::on_bt_add_share_file_clicked()
         int n_cols = 4;
         for (int col=0; col!=n_cols; ++col)
         {
-            QTableWidgetItem * const i = new QTableWidgetItem;
+            QTableWidgetItem * const i = new QTableWidgetItem();
             i->setFlags(i->flags() & ~Qt::ItemIsEditable);
             if (col == 0 ) {
                 //Checkbox

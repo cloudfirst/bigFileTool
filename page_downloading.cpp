@@ -211,7 +211,7 @@ void Page_downloading::init_table()
 
         for (int col=0; col!=n_cols; ++col)
         {
-            QTableWidgetItem * const i = new QTableWidgetItem;
+            QTableWidgetItem * const i = new QTableWidgetItem();
             i->setFlags(i->flags() & ~Qt::ItemIsEditable);
             if (col == 0 ) { //选择
                 //Checkbox
@@ -387,7 +387,7 @@ void Page_downloading::add_new_download_task(QString data)
         int n_cols = 4;
         for (int col=0; col!=n_cols; ++col)
         {
-            QTableWidgetItem * const i = new QTableWidgetItem;
+            QTableWidgetItem * const i = new QTableWidgetItem();
             i->setFlags(i->flags() & ~Qt::ItemIsEditable);
             if (col == 0 ) {
                 //Checkbox
