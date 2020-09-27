@@ -283,7 +283,7 @@
      </font>
     </property>
     <property name="text">
-     <string>CopyRigth @ 2020-2030</string>
+     <string>CopyRight @ 2020-2030</string>
     </property>
     <property name="alignment">
      <set>Qt::AlignCenter</set>
