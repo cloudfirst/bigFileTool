@@ -92,7 +92,13 @@ void Page_shared::init_table()
     // init data
     int n_cols = 4;
     QDir dir1(QDir::homePath() + "/oxfold/bigfiletool/shared");
+#if defined(_WIN32)
+    QStringList filters;
+    filters << "*.lnk";
+    QFileInfoList list = dir1.entryInfoList(filters);
+#else
     QFileInfoList list = dir1.entryInfoList();
+#endif
     for (int i = 0; i < list.size(); ++i)
     {
         QFileInfo fileInfo = list.at(i);
@@ -114,7 +120,11 @@ void Page_shared::init_table()
                 i->setCheckState(Qt::Unchecked);
             }
             if (col == 1 ) {
+#if defined(_WIN32)
+                i->setText(fileInfo.fileName().replace(".lnk", ""));
+#else
                 i->setText(fileInfo.fileName());
+#endif
             }
             if (col == 2 ) {
                 i->setText( MyTool::converFileSizeToKBMBGB(fileInfo.size()));
@@ -201,16 +211,12 @@ void Page_shared::on_shared_file_tableWidget_itemClicked(QTableWidgetItem *item)
 void Page_shared::mklink(QString target, QString link)
 {
 #if defined (_WIN32)
-    QString _target = QDir::toNativeSeparators(target);
-    QString _link   = QDir::toNativeSeparators(link);
-    BOOL fCreatedLink = CreateHardLinkA( _link.toStdString().c_str(),
-                                        _target.toStdString().c_str(),
-                                        NULL ); // reserved, must be NULL
+    QFile::link(target, link + ".lnk");
 
-    if ( fCreatedLink == FALSE )
-    {
-        qDebug("create hadr link failed in windows : %s", _target.toStdString().c_str());
-    }
+    QFile down_file(link + ".info");
+    down_file.open(QIODevice::WriteOnly);
+    down_file.write(target.toStdString().c_str());
+    down_file.close();
 #else
     QFile::link(target, link);
 #endif
@@ -363,7 +369,8 @@ void Page_shared::on_bt_delete_share_clicked()
         QString fname = item->text();
 
         //delete file in shared directory
-        QFile::remove(MyTool::getSharedDir() + fname);
+        QFile::remove(MyTool::getSharedDir() + fname + ".lnk");
+        QFile::remove(MyTool::getSharedDir() + fname + ".info");
         t->removeRow(row);
     } else {
         QMessageBox msgBox;
