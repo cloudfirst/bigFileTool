@@ -103,6 +103,25 @@ uint64_t getCurrentFileSize(QString fname)
     return info.size();
 }
 
+int Page_downloading::getTableRowByName(QString name)
+{
+    QTableWidget * t = ui->tableWidget;
+    QTableWidgetItem *item;
+    QString fname;
+    int rows = t->rowCount();
+
+    int i;
+    for (i=0; i<rows; i++)
+    {
+       item = t->item(i, 1);
+       fname = item->text();
+       if (fname == name) {
+           return i;
+       }
+    }
+    return -1;
+}
+
 void Page_downloading::MyTimerSlot()
 {
     QTableWidget * t = ui->tableWidget;
@@ -112,6 +131,10 @@ void Page_downloading::MyTimerSlot()
     for (int i=0; i<this->http_client_array.size(); ++i)
     {
         Downloading_Task *dt = http_client_array.at(i);
+        QProcess *proc = dt->downloading_process;
+        if (proc->state() != QProcess::Running)
+            continue;
+
         QString fname = dt->downloading_file_name;
         uint64_t new_size = getCurrentFileSize(dt->downloading_file_name);
 
@@ -130,7 +153,9 @@ void Page_downloading::MyTimerSlot()
         }
 
         // update tableWidget
-        int row = dt->row_in_tableWidge;
+        int row = getTableRowByName(fname);
+        if (row == -1)
+            continue;
 
         item = t->item(row, 2);
         QString _f_len_s = MyTool::converFileSizeToKBMBGB(new_size) + " / " + \
@@ -299,7 +324,6 @@ void Page_downloading::init_table()
         task->downloading_file_name = obj["file_name"].toString();
         task->downloading_file_percentage_name = ba;
         task->total_len = obj["file_size"].toDouble();
-        task->row_in_tableWidge = t->rowCount() - 1 ;
         task->size_in_5s = {c_size, c_size, c_size, c_size, c_size};
 
         task->is_manually_stopped = false;
@@ -386,7 +410,7 @@ void Page_downloading::add_new_download_task(QString data)
         QTableWidget * t = ui->tableWidget;
         t->insertRow(t->rowCount());
 
-        int n_cols = 4;
+        int n_cols = 6;
         for (int col=0; col!=n_cols; ++col)
         {
             QTableWidgetItem * const i = new QTableWidgetItem();
@@ -469,7 +493,6 @@ void Page_downloading::add_new_download_task(QString data)
         task->downloading_file_name = file_name;
         task->downloading_file_percentage_name = ba;
         task->total_len = obj["file_size"].toDouble();
-        task->row_in_tableWidge = t->rowCount() - 1;
         task->size_in_5s = {0, 0, 0, 0, 0};
         task->is_manually_stopped = false;
         http_client_array.append(task);
@@ -480,6 +503,7 @@ void Page_downloading::add_new_download_task(QString data)
 //        }
     }
 }
+
 
 // if process terminated
 // if the file length < total_len and is_manually_stop == false, restart it.
@@ -514,9 +538,9 @@ void Page_downloading::On_client_process_finished(QString fname)
          }
     } else {  // downloading is finished, start post_downloading tasks.
     #if defined(_WIN32)
-        QString old_file = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloading\\" +  + ".downloading";
+        QString old_file = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloading\\" + percentage_name + ".downloading";
         QString new_file = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloaded\\" + fname;
-        QString old_info_file = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloading\\" + fname + ".info";
+        QString old_info_file = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloading\\" + percentage_name + ".info";
         BOOL flag = MoveFileExA(
            old_file.toStdString().c_str(),
            new_file.toStdString().c_str(),
@@ -532,7 +556,10 @@ void Page_downloading::On_client_process_finished(QString fname)
         QFile(old_info_file).remove();
 
         QTableWidget * t = ui->tableWidget;
-        t->removeRow(dt->row_in_tableWidge);
+        int row = getTableRowByName(fname);
+        if (row >= 0) {
+             t->removeRow(row);
+        }
         http_client_array.removeAt(i);
 
         emit download_task_finished(fname);
@@ -604,14 +631,16 @@ void Page_downloading::on_bt_delete_clicked()
         rows = select->selectedRows();
         int row = rows.at(0).row();
 
-        //1 delete row in tableWidget
-        t->removeRow(row);
-
         //2 delete task in tasks
         this->stop_download_status_timer();
             Downloading_Task *dt = http_client_array.at(row);
             dt->downloading_process->kill();
             fname = dt->downloading_file_name;
+            //1 delete row in tableWidget
+            int _row = getTableRowByName(fname);
+            if (_row >= 0) {
+                 t->removeRow(_row);
+            }
             percentage_name = dt->downloading_file_percentage_name;
             http_client_array.removeAt(row);
         this->start_download_status_timer();
@@ -677,6 +706,15 @@ void Page_downloading::on_bt_pause_one_clicked()
         QProcess *proc = dt->downloading_process;
         proc->kill();
         dt->is_manually_stopped = true;
+
+        QTableWidgetItem *item;
+        item = t->item(row, 4);
+        item->setText("已暂停");
+        t->setItem(t->rowCount()-1, 4, item);
+
+        item = t->item(row, 5);
+        item->setText("剩余 0:0:0");
+        t->setItem(t->rowCount()-1, 5, item);
     } else {
         QMessageBox msgBox;
         msgBox.setText("请先选择一个下载任务!");

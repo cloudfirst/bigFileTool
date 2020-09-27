@@ -20,7 +20,6 @@ struct Downloading_Task {
     QString  downloading_file_percentage_name;
     QList<uint64_t> size_in_5s;
     uint64_t total_len;
-    int      row_in_tableWidge;
     bool     is_manually_stopped;
 };
 
@@ -40,6 +39,7 @@ protected:
     void start_download_status_timer();
     void stop_download_status_timer();
     int getNumberOfRuningTasks();
+    int getTableRowByName(QString name);
     bool b_destroy;
 
 signals:
