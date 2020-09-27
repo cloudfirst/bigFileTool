@@ -17,6 +17,7 @@ struct Downloading_Task {
     QString       exe_path;
     QStringList   proc_args;
     QString  downloading_file_name;
+    QString  downloading_file_percentage_name;
     QList<uint64_t> size_in_5s;
     uint64_t total_len;
     int      row_in_tableWidge;

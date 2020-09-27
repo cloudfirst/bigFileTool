@@ -255,21 +255,22 @@ void Page_downloading::init_table()
 
         }
 
-        QString url = "http://" + obj["host_ip"].toString() + ":8080" + "/" +obj["file_name"].toString();
+        QByteArray ba = QUrl::toPercentEncoding(obj["file_name"].toString(), "", "");
+        QString url = "http://" + obj["host_ip"].toString() + ":8080" + "/" + ba;
 #if defined(_WIN32)
         QString dst_file_name = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloading\\" + obj["file_name"].toString() + ".downloading";
         QString client_cred_path = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\client\\";
 #else
-        QString dst_file_name = QDir::homePath() + "/oxfold/bigfiletool/downloading/" + obj["file_name"].toString() + ".downloading";
+        QString dst_file_name = QDir::homePath() + "/oxfold/bigfiletool/downloading/" + ba + ".downloading";
         QString client_cred_path = QDir::homePath() + "/oxfold/bigfiletool/client/";
 #endif
         QStringList args = {
             "-C",
-            url.toStdString().c_str(),
+            url,
             "-D",
-            dst_file_name.toStdString().c_str(),
+            dst_file_name,
             "-Z",
-            client_cred_path.toStdString().c_str(),
+            client_cred_path,
         };
 
         QProcess *p_http_client =  new QProcess(this);
@@ -296,6 +297,7 @@ void Page_downloading::init_table()
         task->proc_args = args;
         task->exe_path  = exe_path;
         task->downloading_file_name = obj["file_name"].toString();
+        task->downloading_file_percentage_name = ba;
         task->total_len = obj["file_size"].toDouble();
         task->row_in_tableWidge = t->rowCount() - 1 ;
         task->size_in_5s = {c_size, c_size, c_size, c_size, c_size};
@@ -423,21 +425,22 @@ void Page_downloading::add_new_download_task(QString data)
 
         }
 
-        QString url = "http://" + host_ip + ":8080" + "/" + file_name;
+        QByteArray ba = QUrl::toPercentEncoding(file_name, "", "");
+        QString url = "http://" + host_ip + ":8080" + "/" + ba;
 #if defined(_WIN32)
         QString dst_file_name = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloading\\" + file_name + ".downloading";
         QString client_cred_path = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\client\\";
 #else
-        QString dst_file_name = QDir::homePath() + "/oxfold/bigfiletool/downloading/" + file_name + ".downloading";
+        QString dst_file_name = QDir::homePath() + "/oxfold/bigfiletool/downloading/" + ba + ".downloading";
         QString client_cred_path = QDir::homePath() + "/oxfold/bigfiletool/client/";
 #endif
         QStringList args = {
             "-C",
-            url.toStdString().c_str(),
+            url,
             "-D",
-            dst_file_name.toStdString().c_str(),
+            dst_file_name,
             "-Z",
-            client_cred_path.toStdString().c_str(),
+            client_cred_path,
         };
 
         QProcess *p_http_client =  new QProcess(this);
@@ -464,6 +467,7 @@ void Page_downloading::add_new_download_task(QString data)
         task->exe_path  = exe_path;
         task->proc_args = args;
         task->downloading_file_name = file_name;
+        task->downloading_file_percentage_name = ba;
         task->total_len = obj["file_size"].toDouble();
         task->row_in_tableWidge = t->rowCount() - 1;
         task->size_in_5s = {0, 0, 0, 0, 0};
@@ -485,12 +489,15 @@ void Page_downloading::On_client_process_finished(QString fname)
     if (b_destroy) return;
 
     Downloading_Task *dt = NULL;
-    uint64_t new_size = getCurrentFileSize(fname);
+    uint64_t new_size;
+    QString percentage_name;
     int i=0;
     for (i=0; i<this->http_client_array.size(); ++i)
     {
         dt = http_client_array.at(i);
         if (dt->downloading_file_name == fname) {
+            percentage_name = dt->downloading_file_percentage_name;
+            new_size = getCurrentFileSize(percentage_name);
             break;
         }
     }
@@ -507,7 +514,7 @@ void Page_downloading::On_client_process_finished(QString fname)
          }
     } else {  // downloading is finished, start post_downloading tasks.
     #if defined(_WIN32)
-        QString old_file = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloading\\" + fname + ".downloading";
+        QString old_file = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloading\\" +  + ".downloading";
         QString new_file = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloaded\\" + fname;
         QString old_info_file = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloading\\" + fname + ".info";
         BOOL flag = MoveFileExA(
@@ -516,9 +523,9 @@ void Page_downloading::On_client_process_finished(QString fname)
            MOVEFILE_COPY_ALLOWED
         );
     #else
-        QString old_file = QDir::homePath() + "/oxfold/bigfiletool/downloading/" + fname + ".downloading";
+        QString old_file = QDir::homePath() + "/oxfold/bigfiletool/downloading/" + percentage_name + ".downloading";
         QString new_file = QDir::homePath() + "/oxfold/bigfiletool/downloaded/" + fname;
-        QString old_info_file = QDir::homePath() + "/oxfold/bigfiletool/downloading/" + fname + ".info";
+        QString old_info_file = QDir::homePath() + "/oxfold/bigfiletool/downloading/" + percentage_name + ".info";
         QFile::rename(old_file, new_file);
     #endif
         // remove downloading info
@@ -590,6 +597,7 @@ void Page_downloading::on_bt_delete_clicked()
     QItemSelectionModel *select = t->selectionModel();
     QModelIndexList  rows;
     QString fname;
+    QString percentage_name;
 
     if (select->hasSelection())
     {
@@ -604,16 +612,17 @@ void Page_downloading::on_bt_delete_clicked()
             Downloading_Task *dt = http_client_array.at(row);
             dt->downloading_process->kill();
             fname = dt->downloading_file_name;
+            percentage_name = dt->downloading_file_percentage_name;
             http_client_array.removeAt(row);
         this->start_download_status_timer();
 
         //3 delete files in downloading directory
     #if defined(_WIN32)
-        QString df(QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloading\\" + fname + ".downloading");
-        QString inf(QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloading\\" + fname + ".info");
+        QString df(QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloading\\" + percentage_name + ".downloading");
+        QString inf(QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloading\\" + percentage_name + ".info");
     #else
-        QString df(QDir::homePath() + "/oxfold/bigfiletool/downloading/" + fname + ".downloading");
-        QString inf(QDir::toNativeSeparators(QDir::homePath()) + "/oxfold/bigfiletool/downloading/" + fname + ".info");
+        QString df(QDir::homePath() + "/oxfold/bigfiletool/downloading/" + percentage_name + ".downloading");
+        QString inf(QDir::toNativeSeparators(QDir::homePath()) + "/oxfold/bigfiletool/downloading/" + percentage_name + ".info");
     #endif
         QFile::remove(df);
         QFile::remove(inf);
