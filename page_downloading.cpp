@@ -283,7 +283,7 @@ void Page_downloading::init_table()
         QByteArray ba = QUrl::toPercentEncoding(obj["file_name"].toString(), "", "");
         QString url = "http://" + obj["host_ip"].toString() + ":8080" + "/" + ba;
 #if defined(_WIN32)
-        QString dst_file_name = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloading\\" + obj["file_name"].toString() + ".downloading";
+        QString dst_file_name = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloading\\" + ba + ".downloading";
         QString client_cred_path = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\client\\";
 #else
         QString dst_file_name = QDir::homePath() + "/oxfold/bigfiletool/downloading/" + ba + ".downloading";
@@ -452,7 +452,7 @@ void Page_downloading::add_new_download_task(QString data)
         QByteArray ba = QUrl::toPercentEncoding(file_name, "", "");
         QString url = "http://" + host_ip + ":8080" + "/" + ba;
 #if defined(_WIN32)
-        QString dst_file_name = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloading\\" + file_name + ".downloading";
+        QString dst_file_name = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloading\\" + ba + ".downloading";
         QString client_cred_path = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\client\\";
 #else
         QString dst_file_name = QDir::homePath() + "/oxfold/bigfiletool/downloading/" + ba + ".downloading";
@@ -541,9 +541,9 @@ void Page_downloading::On_client_process_finished(QString fname)
         QString old_file = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloading\\" + percentage_name + ".downloading";
         QString new_file = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloaded\\" + fname;
         QString old_info_file = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloading\\" + percentage_name + ".info";
-        BOOL flag = MoveFileExA(
-           old_file.toStdString().c_str(),
-           new_file.toStdString().c_str(),
+        BOOL flag = MoveFileExW(
+           (LPCWSTR)old_file.toStdWString().c_str(),
+           (LPCWSTR)new_file.toStdWString().c_str(),
            MOVEFILE_COPY_ALLOWED
         );
     #else

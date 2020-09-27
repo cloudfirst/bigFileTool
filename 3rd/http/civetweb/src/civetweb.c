@@ -7753,6 +7753,29 @@ substitute_index_file(struct mg_connection *conn,
 }
 #endif
 
+#if defined(_WIN32)
+static char*
+get_target_path_from_lnk(char *link_path)
+{
+    char tmp[PATH_MAX];
+    struct mg_file_stat fstat;
+
+    memset(tmp, 0x00, PATH_MAX);
+    sprintf(tmp, "%s%s", link_path, ".info");
+    mg_stat(NULL, tmp, &fstat);
+
+
+    wchar_t wbuf[W_PATH_MAX];
+    path_to_unicode(NULL, tmp, wbuf, ARRAY_SIZE(wbuf));
+    FILE *file;
+    file = _wfopen(wbuf, L"rb");
+
+    memset(link_path, 0x00, PATH_MAX);
+    int num_read = (int)fread(link_path, 1, (size_t)fstat.size, file);
+    fclose(file);
+    return link_path;
+}
+#endif
 
 static void
 interpret_uri(struct mg_connection *conn, /* in/out: request (must be valid) */
@@ -7832,6 +7855,10 @@ interpret_uri(struct mg_connection *conn, /* in/out: request (must be valid) */
 	truncated = 0;
 	mg_snprintf(
 	    conn, &truncated, filename, filename_buf_len - 1, "%s%s", root, uri);
+#if defined(_WIN32)
+    // get real file path from shortcut file.
+    filename = get_target_path_from_lnk(filename);
+#endif
     fprintf(stdout, "requested file is : %d", filename);
 
 	if (truncated) {

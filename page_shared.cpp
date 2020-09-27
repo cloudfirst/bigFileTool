@@ -273,7 +273,7 @@ void Page_shared::on_bt_add_share_file_clicked()
 qint64 getFileSize(QString shared_file_name)
 {
 #if defined (_WIN32)
-    QString file_path = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\shared\\" +  shared_file_name;
+    QString file_path = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\shared\\" +  shared_file_name + ".lnk";
 #else
     QString file_path = QDir::homePath() + "/oxfold/bigfiletool/shared/" +  shared_file_name;
 #endif
