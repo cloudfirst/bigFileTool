@@ -90,6 +90,7 @@ QString MyTool::converFileSizeToKBMBGB(qint64 filesize)
     QString szResult = QString::number(floor(size));
     if( rest > 0)
     {
+       rest = rest * 100 / mod;
        szResult += QString(".") + QString::number(rest).left(2);
     }
     szResult += units[i];
