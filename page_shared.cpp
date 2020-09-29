@@ -39,9 +39,7 @@ Page_shared::Page_shared(QWidget *parent) :
              MyTool::getSharedDir()
         };
 
-        p_http_server->setProgram(exe_path);
-        p_http_server->setArguments(args);
-        p_http_server->start();
+        p_http_server->start(exe_path, args);
 
         connect(p_http_server, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
             [=](int exitCode, QProcess::ExitStatus exitStatus)
@@ -82,7 +80,7 @@ void Page_shared::init_table()
 
     // init data
     int n_cols = 4;
-    QDir dir1(QDir::homePath() + "/oxfold/bigfiletool/shared");
+    QDir dir1(MyTool::getSharedDir());
 #if defined(_WIN32)
     QStringList filters;
     filters << "*.lnk";
@@ -227,7 +225,7 @@ void Page_shared::on_bt_add_share_file_clicked()
         QDateTime   lastmodified = info.lastModified();
 
         //create symlink at ~/oxfold/bigfiletool/shared
-        mklink(afp, QDir::homePath() + "/oxfold/bigfiletool/shared/" + name);
+        mklink(afp, MyTool::getSharedDir() + name);
 
         //add item to tableWidget
         QTableWidget * t = ui->shared_file_tableWidget;

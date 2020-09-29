@@ -71,6 +71,8 @@ void Page_downloading::start_download_status_timer()
 QString convertSencond2HHMMSS(uint64_t time)
 {
     int hour = time/3600;
+    if (hour > 100) hour = 100;
+
     time = time%3600;
     int min = time/60;
     time = time%60;

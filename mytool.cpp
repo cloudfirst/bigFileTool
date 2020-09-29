@@ -109,7 +109,7 @@ QString MyTool::getDownloadedDir()
 {
     QString df;
 #if defined(_WIN32)
-    df = (QDir::toNativeSeparators(QDir::homePath()) + "\\AppData\\oxfold\\bigfiletool\\downloaded\\");
+    df = (QDir::toNativeSeparators(QDir::homePath()) + "\\Downloads\\");
 #else
     df = (QDir::homePath() + "/oxfold/bigfiletool/downloaded/");
 #endif
@@ -120,7 +120,7 @@ QString MyTool::getDownloadingDir()
 {
     QString df;
 #if defined(_WIN32)
-    df = (QDir::toNativeSeparators(QDir::homePath()) + "\\AppData\\oxfold\\bigfiletool\\downloading\\");
+    df = (QDir::toNativeSeparators(QDir::homePath()) + "\\Downloads\\");
 #else
     df = (QDir::homePath() + "/oxfold/bigfiletool/downloading/");
 #endif
@@ -178,9 +178,9 @@ QString MyTool::getMyrouterCredDir()
 
 #if defined(_WIN32)
     if (MyTool::Win32or64() == "64") {
-        df = "C:\\Program Files(x86)\\OxFold\BigFileTool\oxfold-webtool.exe";
+        df = "C:\\Program Files (x86)\\OxFold\\BigFileTool\\oxfold-webtool.exe";
     } else {
-        df = "C:\\Program Files\\OxFold\BigFileTool\oxfold-webtool.exe";
+        df = "C:\\Program Files\\OxFold\\BigFileTool\\oxfold-webtool.exe";
     }
 #else
     #ifdef Q_OS_MACOS
