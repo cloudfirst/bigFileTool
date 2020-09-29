@@ -8,57 +8,43 @@ MyTool::MyTool(QObject *parent) : QObject(parent)
 
 void MyTool::init_bft_env()
 {
-    //create directories at home dir
-    // ~/oxfold/bigfiletool/shared
-    // ~/oxfold/bigfiletool/downloaded
-    // ~/oxfold/bigfiletool/downloading
-    QString home = QDir::homePath();
-    QDir dir1(QDir::homePath() + "/oxfold/bigfiletool/shared");
+    QDir dir1(MyTool::getSharedDir());
     if (!dir1.exists())
     {
-        dir1.mkpath(QDir::homePath() + "/oxfold/bigfiletool/shared");
+        dir1.mkpath(MyTool::getSharedDir());
     }
-    QDir dir2(QDir::homePath() + "/oxfold/bigfiletool/downloaded");
+    QDir dir2(MyTool::getDownloadedDir());
     if (!dir2.exists())
     {
-        dir2.mkpath(QDir::homePath() + "/oxfold/bigfiletool/downloaded");
+        dir2.mkpath(MyTool::getDownloadedDir());
     }
-    QDir dir3(QDir::homePath() + "/oxfold/bigfiletool/downloading");
+    QDir dir3(MyTool::getDownloadingDir());
     if (!dir3.exists())
     {
-        dir3.mkpath(QDir::homePath() + "/oxfold/bigfiletool/downloading");
+        dir3.mkpath(MyTool::getDownloadingDir());
     }
-    QDir dir4(QDir::homePath() + "/oxfold/bigfiletool/myrouter");
+
+    QDir dir4(MyTool::getMyrouterCredDir());
     if (!dir4.exists())
     {
-        dir4.mkpath(QDir::homePath() + "/oxfold/bigfiletool/myrouter");
+        dir4.mkpath(MyTool::getMyrouterCredDir());
+    }
+
+    QDir dir5(MyTool::getClientCredDir());
+    if (!dir5.exists())
+    {
+        dir5.mkpath(MyTool::getClientCredDir());
     }
 }
 
 void MyTool::close_bft_env()
 {
-#if defined(_WIN32)
-    QString sipfile(QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\myrouter\\webserver.txt");
-#else
-    QString sipfile(QDir::homePath() + "/oxfold/bigfiletool/myrouter/webserver.txt");
-#endif
-    QFile::remove(sipfile);
+    QFile::remove(MyTool::getMyrouterCredDir() + "webserver.txt");
 }
 
 QString MyTool::getNodeIPV4()
 {
-    // const QHostAddress &localhost = QHostAddress(QHostAddress::LocalHost);
-    // for (const QHostAddress &address: QNetworkInterface::allAddresses())
-    // {
-    //     if (address.protocol() == QAbstractSocket::IPv4Protocol && address != localhost)
-    //          return address.toString();
-    // }
-#if defined(_WIN32)
-    QString sipfile(QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\myrouter\\webserver.txt");
-#else
-    QString sipfile(QDir::homePath() + "/oxfold/bigfiletool/myrouter/webserver.txt");
-#endif
-    QFile f(sipfile);
+    QFile f(MyTool::getMyrouterCredDir() + "webserver.txt");
     if (!f.exists()) {
         return "0.0.0.0";
     } else {
@@ -110,60 +96,114 @@ void MyTool::killAllProcess()
 
 QString MyTool::getSharedDir()
 {
+    QString df;
 #if defined(_WIN32)
-    QString df(QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\shared\\");
+    df = (QDir::toNativeSeparators(QDir::homePath()) + "\\AppData\\oxfold\\bigfiletool\\shared\\");
 #else
-    QString df(QDir::homePath() + "/oxfold/bigfiletool/shared/");
+    df = (QDir::homePath() + "/oxfold/bigfiletool/shared/");
 #endif
     return df;
 }
 
 QString MyTool::getDownloadedDir()
 {
+    QString df;
 #if defined(_WIN32)
-    QString df(QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloaded\\");
+    df = (QDir::toNativeSeparators(QDir::homePath()) + "\\AppData\\oxfold\\bigfiletool\\downloaded\\");
 #else
-    QString df(QDir::homePath() + "/oxfold/bigfiletool/downloaded/");
+    df = (QDir::homePath() + "/oxfold/bigfiletool/downloaded/");
 #endif
     return df;
 }
 
 QString MyTool::getDownloadingDir()
 {
+    QString df;
 #if defined(_WIN32)
-    QString df(QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloading\\");
+    df = (QDir::toNativeSeparators(QDir::homePath()) + "\\AppData\\oxfold\\bigfiletool\\downloading\\");
 #else
-    QString df(QDir::homePath() + "/oxfold/bigfiletool/downloading/");
+    df = (QDir::homePath() + "/oxfold/bigfiletool/downloading/");
 #endif
     return df;
 }
 
 QString MyTool::getMyrouterCredDir()
 {
+    QString df;
 #if defined(_WIN32)
-    QString df(QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\myrouter\\");
+   df = (QDir::toNativeSeparators(QDir::homePath()) + "\\AppData\\oxfold\\webtool\\myrouter\\");
 #else
-    QString df(QDir::homePath() + "/oxfold/bigfiletool/myrouter/");
+   #ifdef Q_OS_MACOS
+       df = "/Library/Application Support/OxFold/BigFileTool/myrouter/";
+   #else
+       df =  "/usr/local/oxfold/bigfiletool/myrouter/");
+   #endif
 #endif
-    return df;
+   return df;
 }
 
  QString MyTool::getClientCredDir()
  {
+     QString df;
 #if defined(_WIN32)
-    QString df(QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\client\\");
+    df = (QDir::toNativeSeparators(QDir::homePath()) + "\\AppData\\oxfold\\webtool\\client\\");
 #else
-    QString df(QDir::homePath() + "/oxfold/bigfiletool/client/");
+    #ifdef Q_OS_MACOS
+        df = "/Library/Application Support/OxFold/BigFileTool/client/";
+    #else
+        df =  "/usr/local/oxfold/bigfiletool/client/");
+    #endif
 #endif
     return df;
  }
 
  QString MyTool::getWebToolDir()
  {
+     QString df;
 #if defined(_WIN32)
-    QString df(QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\webtool\\");
+    df = (QDir::toNativeSeparators(QDir::homePath()) + "\\AppData\\oxfold\\webtool\\");
 #else
-    QString df(QDir::homePath() + "/oxfold/webtool/");
+    #ifdef Q_OS_MACOS
+        df = "/Library/Application Support/OxFold/BigFileTool/";
+    #else
+        df = "/usr/local/oxfold/bigfiletool/";
+    #endif
 #endif
     return df;
+ }
+
+ QString MyTool::getOxfoldWebTool()
+ {
+     QString df;
+
+#if defined(_WIN32)
+    if (MyTool::Win32or64() == "64") {
+        df = "C:\\Program Files(x86)\\OxFold\BigFileTool\oxfold-webtool.exe";
+    } else {
+        df = "C:\\Program Files\\OxFold\BigFileTool\oxfold-webtool.exe";
+    }
+#else
+    #ifdef Q_OS_MACOS
+        df = "/Library/Application Support/OxFold/BigFileTool/oxfold-webtool";
+    #else
+        df = "/usr/bin/oxfold-webtool";
+    #endif
+#endif
+
+    return df;
+ }
+
+
+ QString MyTool::Win32or64()
+ {
+    #ifdef Q_OS_WIN32
+        bool h = QSysInfo::currentCpuArchitecture().contains(QLatin1String("64"));
+        if (h) {
+            return QString("64");
+        } else {
+            return QString("32");
+        }
+    #else
+        return QString("64");
+    #endif
  }

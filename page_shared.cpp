@@ -33,20 +33,11 @@ Page_shared::Page_shared(QWidget *parent) :
     this->p_http_server = new QProcess(this);
 
     if (b_start_webserver_auto) {
-        QString exe_path;
-    #if defined(_WIN32)
-         exe_path = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\webtool\\oxfold-webtool.exe";
-         QStringList args = {
-             "-document_root",
-             QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\shared"
-         };
-    #else
-        exe_path = QDir::homePath() + "/oxfold/webtool/oxfold-webtool";
+        QString exe_path = MyTool::getOxfoldWebTool();
         QStringList args = {
              "-document_root",
-             QDir::homePath() + "/oxfold/bigfiletool/shared"
+             MyTool::getSharedDir()
         };
-    #endif
 
         p_http_server->setProgram(exe_path);
         p_http_server->setArguments(args);
@@ -273,9 +264,9 @@ void Page_shared::on_bt_add_share_file_clicked()
 qint64 getFileSize(QString shared_file_name)
 {
 #if defined (_WIN32)
-    QString file_path = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\shared\\" +  shared_file_name + ".lnk";
+    QString file_path = MyTool::getSharedDir()  +  shared_file_name + ".lnk";
 #else
-    QString file_path = QDir::homePath() + "/oxfold/bigfiletool/shared/" +  shared_file_name;
+    QString file_path = MyTool::getSharedDir()  +  shared_file_name;
 #endif
     QFileInfo info(file_path);
     return info.size();

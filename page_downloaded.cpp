@@ -45,11 +45,7 @@ void Page_downloaded::init_table()
 
      // init data
     int n_cols = 4;
-#if defined(_WIN32)
-     QDir dir1(QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloaded\\");
-#else
-    QDir dir1(QDir::homePath() + "/oxfold/bigfiletool/downloaded/");
-#endif
+    QDir dir1(MyTool::getDownloadedDir());
     QFileInfoList list = dir1.entryInfoList();
     for (int i = 0; i < list.size(); ++i)
     {
@@ -109,12 +105,12 @@ void Page_downloaded::resizeEvent(QResizeEvent *e)
 
 void Page_downloaded::on_bt_show_directory_clicked()
 {
+    QString arg = MyTool::getDownloadedDir();
 #ifdef Q_OS_MAC
-    QProcess::execute("open", QStringList() << QDir::homePath() + "/oxfold/bigfiletool/downloaded/");
+    QProcess::execute("open", QStringList() << arg);
 #endif
 
 #ifdef Q_OS_WIN32
-    QString arg = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\downloaded";
     QProcess::execute("explorer.exe", QStringList() << arg);
 #endif
 }

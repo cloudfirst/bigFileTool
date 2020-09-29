@@ -8,6 +8,7 @@
 #include <QMessageBox>
 #include <QFile>
 #include <QDir>
+#include "mytool.h"
 
 Add_link_Dialog::Add_link_Dialog(QWidget *parent) :
     QDialog(parent),
@@ -34,7 +35,7 @@ void Add_link_Dialog::parse_and_save_link()
     int index = m_byteArray.indexOf("oxfold");
     m_byteArray = m_byteArray.mid(index+12);
 
-    QString base_dir = QDir::homePath() + "/oxfold/bigfiletool/downloading/";
+    QString base_dir = MyTool::getDownloadingDir();
     QString json_string = simple_decrypte(m_byteArray, m_pass_word);
     QJsonObject obj;
     QJsonDocument doc = QJsonDocument::fromJson(json_string.toUtf8());
