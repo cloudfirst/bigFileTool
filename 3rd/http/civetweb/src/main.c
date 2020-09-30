@@ -268,7 +268,7 @@ show_server_name(void)
 	(void)MakeConsole();
 #endif
 
-	fprintf(stderr, "CivetWeb v%s, built on %s\n", mg_version(), __DATE__);
+    fprintf(stderr, "oxfold-webtool v%s, built on %s\n", mg_version(), __DATE__);
 }
 
 
@@ -279,7 +279,7 @@ show_usage_and_exit(const char *exeName)
 	int i;
 
 	if (exeName == 0 || *exeName == 0) {
-		exeName = "civetweb";
+        exeName = "oxfold-webtool";
 	}
 
 	show_server_name();
@@ -928,7 +928,7 @@ init_server_name(void)
 	DEBUG_ASSERT((strlen(mg_version()) + 12) < sizeof(g_server_base_name));
 	snprintf(g_server_base_name,
 	         sizeof(g_server_base_name),
-	         "CivetWeb V%s",
+	         "Oxfold-WebTool V%s",
 	         mg_version());
 	g_server_name = g_server_base_name;
 	g_icon_name = NULL;
@@ -1002,7 +1002,7 @@ verify_existence(char **options, const char *option_name, int must_be_dir)
 	    && (stat(path, &st) != 0
 	        || ((S_ISDIR(st.st_mode) ? 1 : 0) != must_be_dir))) {
 		die("Invalid path for %s: [%s]: (%s). Make sure that path is either "
-		    "absolute, or it is relative to civetweb executable.",
+		    "absolute, or it is relative to oxfold-webtool executable.",
 		    option_name,
 		    path,
 		    strerror(errno));

@@ -35,16 +35,6 @@ signals:
 #endif // MYTOOL_H
 
 /*
- * Mac OS X安装包的目录设计
- *
- * /Applications/BigFileTool/bigfiletool.app
- * /Library/Application Support/OxFold/BigFileTool/oxfold-webtool + zt_share.dylib
- * /Library/Application Support/OxFold/BigFileTool/myrouter/   chown -R luhya:staff myrouter
- * /Library/Application Support/OxFold/BigFileTool/client/     chown -R luhya:staff client
- * $HOME/oxfold/bigfiletool/shared/
- * $HOME/oxfold/bigfiletool/downloaded/
- * $HOME/oxfold/bigfiletool/downloading/
- *
  * Windows安装包的目录设计
  *
  * C:\Program Files(x86)\OxFold\BigFileTool\bigfiletool.exe
@@ -55,12 +45,23 @@ signals:
  * %HOME%\AppData\oxfold\webtool\myrouter\
  * %HOME%\AppData\oxfold\webtool\client\
  *
+ * Mac OS X安装包的目录设计
+ *
+ * /Applications/BigFileTool/bigfiletool.app
+ * /Library/Application Support/OxFold/BigFileTool/oxfold-webtool + zt_share.dylib
+ * /Library/Application Support/OxFold/BigFileTool/myrouter/   chown -R luhya:staff myrouter --> /usr/local/bigfiletool/myrouter
+ * /Library/Application Support/OxFold/BigFileTool/client/     chown -R luhya:staff client   --> /usr/local/bigfiletool/client
+ * $HOME/oxfold/bigfiletool/shared/
+ * $HOME/oxfold/bigfiletool/downloaded/
+ * $HOME/oxfold/bigfiletool/downloading/
+ *
+ *
  * Linux安装包的目录设计
  *
- * /usr/local/oxfold/bigfiletool/bigfiletool    -> /usr/bin/bigfiletool
- * /usr/local/oxfold/bigfiletool/oxfold-webtool -> /usr/bin/oxfold-webtool
- * /usr/local/oxfold/bigfiletool/myrouter/      chown $USER:$USER myrouter
- * /usr/local/oxfold/bigfiletool/client         chown $USER:$USER myrouter
+ * /usr/local/bigfiletool/bigfiletool    -> /usr/bin/bigfiletool
+ * /usr/local/bigfiletool/oxfold-webtool -> /usr/bin/oxfold-webtool
+ * /usr/local/bigfiletool/myrouter/      chown $USER:$USER myrouter
+ * /usr/local/bigfiletool/client         chown $USER:$USER myrouter
  * $HOME/oxfold/bigfiletool/shared/
  * $HOME/oxfold/bigfiletool/downloaded/
  * $HOME/oxfold/bigfiletool/downloading/

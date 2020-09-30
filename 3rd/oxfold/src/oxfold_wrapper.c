@@ -34,12 +34,7 @@ char* getHomePath()
     char *home = add_char_array(home_drive, home_path);
     return add_char_array(home, "\\AppData\\oxfold\\webtool\\myrouter");
 #else
-    int ret = access("/Applications", 0);
-    if (ret == 0) {  // mac os x
-        return "/Library/Application Support/OxFold/BigFileTool/myrouter/";
-    } else { // linux
-        return "/usr/local/oxfold/bigfiletool/myrouter/";
-    }
+    return "/usr/local/bigfiletool/myrouter/";
 #endif
 }
 

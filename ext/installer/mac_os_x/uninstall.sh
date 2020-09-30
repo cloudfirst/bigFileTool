@@ -22,6 +22,8 @@ echo "remove bigfiletool.app"
 cd '/Library/Application Support/OxFold/BigFileTool'
 if [ "`pwd`" = '/Library/Application Support/OxFold/BigFileTool' ]; then
 	rm -rf *.sh *.dylib oxfold-webtool
+	rm /usr/local/bigfiletool
+	rm -fr $HOME/oxfold
 fi
 
 echo 'Uninstall complete.'

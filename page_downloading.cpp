@@ -134,7 +134,7 @@ void Page_downloading::MyTimerSlot()
             continue;
 
         QString fname = dt->downloading_file_name;
-        uint64_t new_size = getCurrentFileSize(dt->downloading_file_name);
+        uint64_t new_size = getCurrentFileSize(dt->downloading_file_percentage_name);
 
         dt->size_in_5s.pop_front();
         dt->size_in_5s.append(new_size);
@@ -226,7 +226,8 @@ void Page_downloading::init_table()
         // int rh = t->rowHeight(t->rowCount() - 1);
         // t->setRowHeight(t->rowCount() - 1, 50);
 
-        uint64_t  c_size = getCurrentFileSize(obj["file_name"].toString());
+        QByteArray ba = QUrl::toPercentEncoding(obj["file_name"].toString(), "", "");
+        uint64_t  c_size = getCurrentFileSize(QString(ba));
 
         for (int col=0; col!=n_cols; ++col)
         {
@@ -274,7 +275,7 @@ void Page_downloading::init_table()
 
         }
 
-        QByteArray ba = QUrl::toPercentEncoding(obj["file_name"].toString(), "", "");
+
         QString url = "http://" + obj["host_ip"].toString() + ":8080" + "/" + ba;
         QString dst_file_name = MyTool::getDownloadingDir() + ba + ".downloading";
         QString client_cred_path = MyTool::getClientCredDir();

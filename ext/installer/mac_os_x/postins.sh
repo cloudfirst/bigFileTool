@@ -9,4 +9,6 @@ cd "/Library/Application Support/OxFold/BigFileTool"
 chown -R $USER:staff myrouter
 chown -R $USER:staff client
 
+ln -f -s "/Library/Application Support/OxFold/BigFileTool" /usr/local/bigfiletool
+
 exit 0

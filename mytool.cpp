@@ -111,7 +111,7 @@ QString MyTool::getDownloadedDir()
 #if defined(_WIN32)
     df = (QDir::toNativeSeparators(QDir::homePath()) + "\\Downloads\\");
 #else
-    df = (QDir::homePath() + "/oxfold/bigfiletool/downloaded/");
+    df = (QDir::homePath() + "/Downloads/");
 #endif
     return df;
 }
@@ -122,7 +122,7 @@ QString MyTool::getDownloadingDir()
 #if defined(_WIN32)
     df = (QDir::toNativeSeparators(QDir::homePath()) + "\\Downloads\\");
 #else
-    df = (QDir::homePath() + "/oxfold/bigfiletool/downloading/");
+    df = (QDir::homePath() + "/Downloads/");
 #endif
     return df;
 }
@@ -133,11 +133,7 @@ QString MyTool::getMyrouterCredDir()
 #if defined(_WIN32)
    df = (QDir::toNativeSeparators(QDir::homePath()) + "\\AppData\\oxfold\\webtool\\myrouter\\");
 #else
-   #ifdef Q_OS_MACOS
-       df = "/Library/Application Support/OxFold/BigFileTool/myrouter/";
-   #else
-       df =  "/usr/local/oxfold/bigfiletool/myrouter/");
-   #endif
+   df =  "/usr/local/bigfiletool/myrouter/";
 #endif
    return df;
 }
@@ -148,11 +144,7 @@ QString MyTool::getMyrouterCredDir()
 #if defined(_WIN32)
     df = (QDir::toNativeSeparators(QDir::homePath()) + "\\AppData\\oxfold\\webtool\\client\\");
 #else
-    #ifdef Q_OS_MACOS
-        df = "/Library/Application Support/OxFold/BigFileTool/client/";
-    #else
-        df =  "/usr/local/oxfold/bigfiletool/client/");
-    #endif
+    df =  "/usr/local/bigfiletool/client/";
 #endif
     return df;
  }
@@ -163,11 +155,7 @@ QString MyTool::getMyrouterCredDir()
 #if defined(_WIN32)
     df = (QDir::toNativeSeparators(QDir::homePath()) + "\\AppData\\oxfold\\webtool\\");
 #else
-    #ifdef Q_OS_MACOS
-        df = "/Library/Application Support/OxFold/BigFileTool/";
-    #else
-        df = "/usr/local/oxfold/bigfiletool/";
-    #endif
+    df = "/usr/local/bigfiletool/";
 #endif
     return df;
  }
@@ -183,11 +171,7 @@ QString MyTool::getMyrouterCredDir()
         df = "C:\\Program Files\\OxFold\\BigFileTool\\oxfold-webtool.exe";
     }
 #else
-    #ifdef Q_OS_MACOS
-        df = "/Library/Application Support/OxFold/BigFileTool/oxfold-webtool";
-    #else
-        df = "/usr/bin/oxfold-webtool";
-    #endif
+    df = "/usr/local/bigfiletool/oxfold-webtool";
 #endif
 
     return df;
