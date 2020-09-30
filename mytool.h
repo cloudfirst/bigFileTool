@@ -40,8 +40,8 @@ signals:
  * C:\Program Files(x86)\OxFold\BigFileTool\bigfiletool.exe
  * C:\Program Files(x86)\OxFold\BigFileTool\oxfold-webtool.exe
  * %HOME%\AppData\oxfold\bigfiletool\shared\
- * %HOME%\AppData\oxfold\bigfiletool\downloaded\
- * %HOME%\AppData\oxfold\bigfiletool\downloading\
+ * %HOME%\Downloads\
+ * %HOME%\Downloads\
  * %HOME%\AppData\oxfold\webtool\myrouter\
  * %HOME%\AppData\oxfold\webtool\client\
  *
@@ -52,8 +52,8 @@ signals:
  * /Library/Application Support/OxFold/BigFileTool/myrouter/   chown -R luhya:staff myrouter --> /usr/local/bigfiletool/myrouter
  * /Library/Application Support/OxFold/BigFileTool/client/     chown -R luhya:staff client   --> /usr/local/bigfiletool/client
  * $HOME/oxfold/bigfiletool/shared/
- * $HOME/oxfold/bigfiletool/downloaded/
- * $HOME/oxfold/bigfiletool/downloading/
+ * $HOME/Downloads/
+ * $HOME/Downloads/
  *
  *
  * Linux安装包的目录设计

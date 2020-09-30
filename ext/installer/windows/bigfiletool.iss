@@ -5,7 +5,7 @@
 #define MyAppVersion "1.0"
 #define MyAppPublisher "shanghai oxfold, Inc."
 #define MyAppURL "http://www.oxfold.cn/"
-#define MyAppExeName "bigfiletool-setup.exe"
+#define MyAppExeName "bigfiletool.exe"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
@@ -18,7 +18,7 @@ AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
-DefaultDirName={autopf}\{#MyAppName}
+DefaultDirName={autopf}\OxFold\{#MyAppName}
 DisableDirPage=yes
 DisableProgramGroupPage=yes
 ; Uncomment the following line to run in non administrative install mode (install for current user only.)
@@ -34,9 +34,20 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
+[Dirs]
+Name: "{userappdata}\oxfold\bigfiletool\share"
+ 
+
 [Files]
-Source: "Y:\Applications\bigFileTool\3rd\http\bin\windows-x86\bigfiletool.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "Y:\Applications\bigFileTool\3rd\http\bin\windows-x86\oxfold-webtool.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "Z:\bigFileTool\3rd\http\bin\windows-x86\bigfiletool.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "Z:\bigFileTool\3rd\http\bin\windows-x86\oxfold-webtool.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "Z:\bigFileTool\3rd\oxfold\lib\win-x86\zt-shared.dll"; DestDir: "{app}"; 
+Source: "Z:\Release\bigFileTool\windows-x86\*.*"; DestDir: "{app}"; 
+Source: "Z:\Release\bigFileTool\windows-x86\iconengines\*.*"; DestDir: "{app}\iconengines\"; 
+Source: "Z:\Release\bigFileTool\windows-x86\imageformats\*.*"; DestDir: "{app}\imageformats\";
+Source: "Z:\Release\bigFileTool\windows-x86\platforms\*.*"; DestDir: "{app}\platforms\";
+Source: "Z:\Release\bigFileTool\windows-x86\styles\*.*"; DestDir: "{app}\styles\";
+
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
