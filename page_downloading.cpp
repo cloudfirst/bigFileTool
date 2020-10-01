@@ -32,9 +32,6 @@ Page_downloading::Page_downloading(QWidget *parent) :
     ui->bt_delete->setVisible(false);
     ui->bt_start_one->setVisible(false);
     ui->bt_pause_one->setVisible(false);
-
-    ui->bt_pause_all->setVisible(false);
-    ui->bt_start_all->setVisible(false);
 }
 
 
@@ -340,33 +337,33 @@ void Page_downloading::resizeEvent(QResizeEvent *e)
 
 }
 
-void Page_downloading::on_bt_pause_all_clicked()
-{
-    for (int i=0; i<this->http_client_array.size(); ++i)
-    {
-        Downloading_Task *dt = http_client_array.at(i);
-        dt->downloading_process->kill();
-        dt->is_manually_stopped = true;
-    }
-    this->stop_download_status_timer();
-}
+//void Page_downloading::on_bt_pause_all_clicked()
+//{
+//    for (int i=0; i<this->http_client_array.size(); ++i)
+//    {
+//        Downloading_Task *dt = http_client_array.at(i);
+//        dt->downloading_process->kill();
+//        dt->is_manually_stopped = true;
+//    }
+//    this->stop_download_status_timer();
+//}
 
-void Page_downloading::on_bt_start_all_clicked()
-{    
-    int nRun = this->getNumberOfRuningTasks();
-    for (int i=0; i<this->http_client_array.size(); ++i)
-    {
-        Downloading_Task *dt = http_client_array.at(i);
-        QProcess *proc = dt->downloading_process;
+//void Page_downloading::on_bt_start_all_clicked()
+//{
+//    int nRun = this->getNumberOfRuningTasks();
+//    for (int i=0; i<this->http_client_array.size(); ++i)
+//    {
+//        Downloading_Task *dt = http_client_array.at(i);
+//        QProcess *proc = dt->downloading_process;
 
-        if ( nRun < this->max_download_tasks && proc->state() != QProcess::Running) {
-            proc->start(dt->exe_path, dt->proc_args);
-            nRun += 1;
-        }
-        dt->is_manually_stopped = false;
-    }
-    this->start_download_status_timer();
-}
+//        if ( nRun < this->max_download_tasks && proc->state() != QProcess::Running) {
+//            proc->start(dt->exe_path, dt->proc_args);
+//            nRun += 1;
+//        }
+//        dt->is_manually_stopped = false;
+//    }
+//    this->start_download_status_timer();
+//}
 
 void Page_downloading::on_bt_add_clicked()
 {
@@ -597,25 +594,34 @@ void Page_downloading::on_bt_delete_clicked()
         rows = select->selectedRows();
         int row = rows.at(0).row();
 
-        //2 delete task in tasks
-        this->stop_download_status_timer();
-            Downloading_Task *dt = http_client_array.at(row);
-            dt->downloading_process->kill();
-            fname = dt->downloading_file_name;
-            //1 delete row in tableWidget
-            int _row = getTableRowByName(fname);
-            if (_row >= 0) {
-                 t->removeRow(_row);
-            }
-            percentage_name = dt->downloading_file_percentage_name;
-            http_client_array.removeAt(row);
-        this->start_download_status_timer();
+        QMessageBox msgBox;
+        msgBox.setText("确定删除这个下载链接和下载的文件吗？");
+        //msgBox.setInformativeText("Do you want to save your changes?");
+        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
+        msgBox.setDefaultButton(QMessageBox::Cancel);
+        int ret = msgBox.exec();
 
-        //3 delete files in downloading directory
-        QString  df(MyTool::getDownloadingDir() + percentage_name + ".downloading");
-        QString inf(MyTool::getDownloadingDir() + percentage_name + ".info");
-        QFile::remove(df);
-        QFile::remove(inf);
+        if (ret == QMessageBox::Yes) {
+            //2 delete task in tasks
+            this->stop_download_status_timer();
+                Downloading_Task *dt = http_client_array.at(row);
+                dt->downloading_process->kill();
+                fname = dt->downloading_file_name;
+                //1 delete row in tableWidget
+                int _row = getTableRowByName(fname);
+                if (_row >= 0) {
+                     t->removeRow(_row);
+                }
+                percentage_name = dt->downloading_file_percentage_name;
+                http_client_array.removeAt(row);
+            this->start_download_status_timer();
+
+            //3 delete files in downloading directory
+            QString  df(MyTool::getDownloadingDir() + percentage_name + ".downloading");
+            QString inf(MyTool::getDownloadingDir() + percentage_name + ".info");
+            QFile::remove(df);
+            QFile::remove(inf);
+        }
     } else {
         QMessageBox msgBox;
         msgBox.setText("请先选择一个下载任务!");
@@ -679,6 +685,25 @@ void Page_downloading::on_bt_pause_one_clicked()
     } else {
         QMessageBox msgBox;
         msgBox.setText("请先选择一个下载任务!");
+        msgBox.exec();
+    }
+}
+
+void Page_downloading::on_bt_set_downloads_clicked()
+{
+
+    QString dir = QFileDialog::getExistingDirectory(this, tr("选择文件目录"),
+                                                    MyTool::getDownloadedDir(),
+                                                    QFileDialog::ShowDirsOnly
+                                                    | QFileDialog::DontResolveSymlinks);
+
+    if(dir.length() == 0) {
+
+    } else {
+        MyTool::set_downloads_dir(dir);
+
+        QMessageBox msgBox;
+        msgBox.setText("下载目录已经设置为: \n\n" + dir);
         msgBox.exec();
     }
 }

@@ -1,6 +1,8 @@
 #include "mytool.h"
 #include <QProcess>
 
+QString MyTool::m_downlodas_dir = MyTool::init_downloads_dir();
+
 MyTool::MyTool(QObject *parent) : QObject(parent)
 {
 
@@ -107,24 +109,16 @@ QString MyTool::getSharedDir()
 
 QString MyTool::getDownloadedDir()
 {
-    QString df;
 #if defined(_WIN32)
-    df = (QDir::toNativeSeparators(QDir::homePath()) + "\\Downloads\\");
+    return MyTool::m_downlodas_dir + "\\";
 #else
-    df = (QDir::homePath() + "/Downloads/");
+    return MyTool::m_downlodas_dir + "/";
 #endif
-    return df;
 }
 
 QString MyTool::getDownloadingDir()
 {
-    QString df;
-#if defined(_WIN32)
-    df = (QDir::toNativeSeparators(QDir::homePath()) + "\\Downloads\\");
-#else
-    df = (QDir::homePath() + "/Downloads/");
-#endif
-    return df;
+    return MyTool::getDownloadedDir();
 }
 
 QString MyTool::getMyrouterCredDir()
@@ -190,4 +184,34 @@ QString MyTool::getMyrouterCredDir()
     #else
         return QString("64");
     #endif
+ }
+
+ void MyTool::set_downloads_dir(QString dir)
+ {
+     MyTool::m_downlodas_dir = dir;
+     QString download_config_file = MyTool::getWebToolDir() + "download_path.txt";
+     QFile f(download_config_file);
+     f.open(QIODevice::WriteOnly);
+     f.write(dir.toStdString().c_str());
+     f.close();
+ }
+
+ QString MyTool::init_downloads_dir()
+ {
+     QString df;
+     QString download_config_file = MyTool::getWebToolDir() + "download_path.txt";
+     QFile f(download_config_file);
+     if (f.exists()) {
+         f.open(QIODevice::ReadOnly);
+         df = f.readLine();
+         f.close();
+     } else {
+#if defined(_WIN32)
+    df = (QDir::toNativeSeparators(QDir::homePath()) + "\\Downloads\\");
+#else
+    df = (QDir::homePath() + "/Downloads/");
+#endif
+     }
+
+     return df;
  }

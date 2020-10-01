@@ -50,9 +50,8 @@ public slots:
     void add_new_download_task(QString data);
 
 private slots:
-    void on_bt_pause_all_clicked();
-
-    void on_bt_start_all_clicked();
+    //void on_bt_pause_all_clicked();
+    //void on_bt_start_all_clicked();
 
     void on_bt_delete_clicked();
 
@@ -63,6 +62,8 @@ private slots:
     void on_bt_start_one_clicked();
 
     void on_bt_pause_one_clicked();
+
+    void on_bt_set_downloads_clicked();
 
 private:
     Ui::Page_downloading *ui;

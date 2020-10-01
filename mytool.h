@@ -11,6 +11,9 @@ class MyTool : public QObject
 {
     Q_OBJECT
 public:
+    static QString m_downlodas_dir;
+
+public:
     explicit MyTool(QObject *parent = nullptr);
     static void init_bft_env();
     static void close_bft_env();
@@ -28,6 +31,9 @@ public:
     static QString getWebToolDir();
     static QString getOxfoldWebTool();
     static QString Win32or64();
+
+    static QString init_downloads_dir();
+    static void set_downloads_dir(QString dir);
 signals:
 
 };

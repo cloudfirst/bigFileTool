@@ -357,10 +357,19 @@ void Page_shared::on_bt_delete_share_clicked()
         item = t->item(row, 1);
         QString fname = item->text();
 
-        //delete file in shared directory
-        QFile::remove(MyTool::getSharedDir() + fname + ".lnk");
-        QFile::remove(MyTool::getSharedDir() + fname + ".info");
-        t->removeRow(row);
+        QMessageBox msgBox;
+        msgBox.setText("确定不再共享这个文件吗？");
+        //msgBox.setInformativeText("Do you want to save your changes?");
+        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
+        msgBox.setDefaultButton(QMessageBox::Cancel);
+       int ret = msgBox.exec();
+
+       if (ret == QMessageBox::Yes) {
+            //delete file in shared directory
+            QFile::remove(MyTool::getSharedDir() + fname + ".lnk");
+            QFile::remove(MyTool::getSharedDir() + fname + ".info");
+            t->removeRow(row);
+       }
     } else {
         QMessageBox msgBox;
         msgBox.setText("请先选择一个下载任务!");
