@@ -1,5 +1,6 @@
 #include "mytool.h"
 #include <QProcess>
+#include <math.h>
 
 QString MyTool::m_downlodas_dir = MyTool::init_downloads_dir();
 
