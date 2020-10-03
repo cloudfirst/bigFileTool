@@ -113,4 +113,9 @@ void Page_downloaded::on_bt_show_directory_clicked()
 #ifdef Q_OS_WIN32
     QProcess::execute("explorer.exe", QStringList() << arg);
 #endif
+
+#ifdef Q_OS_LINUX
+    QProcess::execute("/usr/bin/nautilus", QStringList() << arg);
+#endif
+
 }
