@@ -9359,8 +9359,10 @@ connect_socket(struct mg_context *ctx /* may be NULL */,
     in4->sin_family = ZTS_AF_INET;
     ip_ver = 4;
 #else
-    if (mg_inet_pton(AF_INET, host, &sa->sin, sizeof(sa->sin), 1)) {
+    if (mg_inet_pton(ZTS_AF_INET, host, &sa->sin, sizeof(sa->sin), 1)) {
         sa->sin.sin_port = zts_htons((uint16_t)port);
+        sa->sin.sin_addr.s_addr = zts_inet_addr(host);
+        sa->sin.sin_family = ZTS_AF_INET;
         ip_ver = 4;
 #if defined(USE_IPV6)
     } else if (mg_inet_pton(AF_INET6, host, &sa->sin6, sizeof(sa->sin6), 1)) {
