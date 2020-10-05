@@ -24,13 +24,16 @@ public:
     void On_http_server_finished();
 
 public slots:
-
+    void MyTimerSlot();
+    void start_webserver_status_timer();
 
 private:
     Ui::Page_shared *ui;
     QProcess  *p_http_server;
     bool  b_start_webserver_auto;
     bool  b_destroy;
+
+    QTimer * m_Timer;
 
 protected:
     virtual void resizeEvent(QResizeEvent *e) override;

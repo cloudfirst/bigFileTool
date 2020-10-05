@@ -27,6 +27,7 @@ Page_shared::Page_shared(QWidget *parent) :
 
     b_start_webserver_auto = true;
     b_destroy = false;
+    this->m_Timer = NULL;
 
     this->init_table();
 
@@ -46,6 +47,35 @@ Page_shared::Page_shared(QWidget *parent) :
         {
             On_http_server_finished();
         });
+
+        start_webserver_status_timer();
+    }
+}
+
+void Page_shared::start_webserver_status_timer()
+{
+    if (m_Timer == NULL) {
+        m_Timer = new QTimer(this);
+        connect(m_Timer, SIGNAL(timeout()),this, SLOT(MyTimerSlot()));
+    }
+    m_Timer->start(1000*60);
+}
+
+void Page_shared::MyTimerSlot()
+{
+    qint64 pid = p_http_server->processId();
+    QProcess check_webserver_cpu;
+    QStringList args = {
+        "u", QString::number(pid)
+    };
+    check_webserver_cpu.start("ps",  args);
+    check_webserver_cpu.waitForFinished();
+    QString output(check_webserver_cpu.readAllStandardOutput());
+    QStringList list=output.split("\n");
+    list = list[1].simplified().split(" ");
+    double cpu_usage = list[2].toFloat();
+    if (cpu_usage >= 90.0) {
+        p_http_server->kill();
     }
 }
 
