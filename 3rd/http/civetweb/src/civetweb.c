@@ -7097,7 +7097,11 @@ mg_write(struct mg_connection *conn, const void *buf, size_t len)
 				    != allowed) {
 					break;
 				}
+#if defined(_WIN32)
+                Sleep(1000);
+#else
 				sleep(1);
+#endif
 				conn->last_throttle_bytes = allowed;
 				conn->last_throttle_time = time(NULL);
 				buf = (const char *)buf + n;
@@ -13516,7 +13520,7 @@ set_throttle(const char *spec, const union usa *rsa, const char *uri)
 
 	while ((spec = next_option(spec, &vec, &val)) != NULL) {
 		mult = ',';
-		if ((val.ptr == NULL) || (sscanf(val.ptr, "%lf%c", &v, &mult) < 1)
+        if ((vec.ptr == NULL) || (sscanf(vec.ptr, "%lf%c", &v, &mult) < 1)
 		    || (v < 0)
 		    || ((lowercase(&mult) != 'k') && (lowercase(&mult) != 'm')
 		        && (mult != ','))) {
@@ -13525,7 +13529,9 @@ set_throttle(const char *spec, const union usa *rsa, const char *uri)
 		v *= (lowercase(&mult) == 'k')
 		         ? 1024
 		         : ((lowercase(&mult) == 'm') ? 1048576 : 1);
-		if (vec.len == 1 && vec.ptr[0] == '*') {
+        throttle = (int)v;
+        break;
+        if (vec.len == 1 && vec.ptr[0] == '*') {
 			throttle = (int)v;
 		} else {
 			int matched = parse_match_net(&vec, rsa, 0);
@@ -14313,7 +14319,8 @@ handle_request(struct mg_connection *conn)
 	DEBUG_TRACE("URL: %s", ri->local_uri);
 
 	/* 2. if this ip has limited speed, set it for this connection */
-	conn->throttle = set_throttle(conn->dom_ctx->config[THROTTLE],
+    const char * spec = conn->dom_ctx->config[THROTTLE];
+    conn->throttle = set_throttle(spec,
 	                              &conn->client.rsa,
 	                              ri->local_uri);
 
@@ -20019,7 +20026,7 @@ mg_start(const struct mg_callbacks *callbacks,
 	init.user_data = user_data;
 	init.configuration_options = options;
 
-	return mg_start2(&init, NULL);
+    return mg_start2(&init, NULL);
 }
 
 

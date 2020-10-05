@@ -38,8 +38,8 @@ Page_shared::Page_shared(QWidget *parent) :
         QStringList args = {
              "-document_root",
              MyTool::getSharedDir(),
-            //"-throttle",
-            //"4k"
+            "-throttle",
+            "1m"
         };
 
         p_http_server->start(exe_path, args);
