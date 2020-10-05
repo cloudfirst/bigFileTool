@@ -37,7 +37,9 @@ Page_shared::Page_shared(QWidget *parent) :
         QString exe_path = MyTool::getOxfoldWebTool();
         QStringList args = {
              "-document_root",
-             MyTool::getSharedDir()
+             MyTool::getSharedDir(),
+            //"-throttle",
+            //"4k"
         };
 
         p_http_server->start(exe_path, args);
@@ -405,8 +407,12 @@ void Page_shared::on_bt_delete_share_clicked()
 
        if (ret == QMessageBox::Yes) {
             //delete file in shared directory
+#if defined(_WIN32)
             QFile::remove(MyTool::getSharedDir() + fname + ".lnk");
             QFile::remove(MyTool::getSharedDir() + fname + ".info");
+#else
+            QFile::remove(MyTool::getSharedDir() + fname);
+#endif
             t->removeRow(row);
        }
     } else {
