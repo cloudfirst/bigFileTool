@@ -7,6 +7,10 @@
 #include <QNetworkInterface>
 #include <QHostAddress>
 
+#if defined(_WIN32)
+#include "Windows.h"
+#endif
+
 class MyTool : public QObject
 {
     Q_OBJECT
@@ -34,6 +38,9 @@ public:
 
     static QString init_downloads_dir();
     static void set_downloads_dir(QString dir);
+#if defined(_WIN32)
+    static BOOL GetCPUUserRateEx(HANDLE hProccess, double &dCPUUserRate);
+#endif
 signals:
 
 };

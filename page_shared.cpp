@@ -63,7 +63,15 @@ void Page_shared::start_webserver_status_timer()
 
 void Page_shared::MyTimerSlot()
 {
+    double cpu_usage = 0.0;
     qint64 pid = p_http_server->processId();
+#if defined(_WIN32)
+    HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
+    if (hProcess == NULL)
+        return;
+    BOOL bSuccess = MyTool::GetCPUUserRateEx(hProcess, cpu_usage);
+    CloseHandle(hProcess);
+#else
     QProcess check_webserver_cpu;
     QStringList args = {
         "u", QString::number(pid)
@@ -73,7 +81,8 @@ void Page_shared::MyTimerSlot()
     QString output(check_webserver_cpu.readAllStandardOutput());
     QStringList list=output.split("\n");
     list = list[1].simplified().split(" ");
-    double cpu_usage = list[2].toFloat();
+    cpu_usage = list[2].toFloat();
+#endif
     if (cpu_usage >= 90.0) {
         p_http_server->kill();
     }
