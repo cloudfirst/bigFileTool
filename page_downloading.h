@@ -14,10 +14,13 @@ class Page_downloading;
 
 struct Downloading_Task {
     QProcess *downloading_process;
+    QString       exe_path;
+    QStringList   proc_args;
     QString  downloading_file_name;
+    QString  downloading_file_percentage_name;
     QList<uint64_t> size_in_5s;
     uint64_t total_len;
-    int      row_in_tableWidge;
+    bool     is_manually_stopped;
 };
 
 class Page_downloading : public QWidget
@@ -36,15 +39,19 @@ protected:
     void start_download_status_timer();
     void stop_download_status_timer();
     int getNumberOfRuningTasks();
+    int getTableRowByName(QString name);
+    bool b_destroy;
+
+signals:
+    void download_task_finished(QString data);
 
 public slots:
     void MyTimerSlot();
     void add_new_download_task(QString data);
 
 private slots:
-    void on_bt_pause_all_clicked();
-
-    void on_bt_start_all_clicked();
+    //void on_bt_pause_all_clicked();
+    //void on_bt_start_all_clicked();
 
     void on_bt_delete_clicked();
 
@@ -56,11 +63,14 @@ private slots:
 
     void on_bt_pause_one_clicked();
 
+    void on_bt_set_downloads_clicked();
+
 private:
     Ui::Page_downloading *ui;
     QList<Downloading_Task*> http_client_array;
     QTimer * m_Timer;
     int    max_download_tasks;
+    QWidget *page;
 
 };
 

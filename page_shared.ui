@@ -55,7 +55,7 @@
     <number>0</number>
    </property>
    <property name="columnCount">
-    <number>8</number>
+    <number>4</number>
    </property>
    <column>
     <property name="text">
@@ -64,6 +64,7 @@
     <property name="font">
      <font>
       <family>Microsoft YaHei</family>
+      <pointsize>9</pointsize>
      </font>
     </property>
     <property name="background">
@@ -81,6 +82,7 @@
     <property name="font">
      <font>
       <family>Microsoft YaHei</family>
+      <pointsize>9</pointsize>
      </font>
     </property>
     <property name="background">
@@ -93,11 +95,12 @@
    </column>
    <column>
     <property name="text">
-     <string>大小</string>
+     <string>文件大小</string>
     </property>
     <property name="font">
      <font>
       <family>Microsoft YaHei</family>
+      <pointsize>9</pointsize>
      </font>
     </property>
     <property name="background">
@@ -110,11 +113,12 @@
    </column>
    <column>
     <property name="text">
-     <string>修改日期</string>
+     <string>修改时间</string>
     </property>
     <property name="font">
      <font>
       <family>Microsoft YaHei</family>
+      <pointsize>9</pointsize>
      </font>
     </property>
     <property name="background">
@@ -125,10 +129,6 @@
      </color>
     </property>
    </column>
-   <column/>
-   <column/>
-   <column/>
-   <column/>
   </widget>
   <widget class="QPushButton" name="bt_share_file">
    <property name="geometry">
@@ -210,6 +210,12 @@
      <horstretch>0</horstretch>
      <verstretch>0</verstretch>
     </sizepolicy>
+   </property>
+   <property name="font">
+    <font>
+     <family>Microsoft YaHei</family>
+     <pointsize>10</pointsize>
+    </font>
    </property>
    <property name="styleSheet">
     <string notr="true">background-color:white</string>

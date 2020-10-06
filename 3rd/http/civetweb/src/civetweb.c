@@ -6469,6 +6469,7 @@ push_inner(struct mg_context *ctx,
 
 	/* Try to read until it succeeds, fails, times out, or the server
 	 * shuts down. */
+	int retry_when_zts_send_1 = 10;
 	for (;;) {
 
 #if !defined(NO_SSL)
@@ -6503,9 +6504,9 @@ push_inner(struct mg_context *ctx,
 			}
 		} else {
 			n = (int)zts_send(sock, buf, (len_t)len, MSG_NOSIGNAL);
-			fprintf(stdout, "push_inner:======= send %d bytes =======\n", n);
+			// fprintf(stdout, "push_inner:======= send %d bytes =======\n", n);
 			err = (n < 0) ? ERRNO : 0;
-			fprintf(stdout,  "push_inner: err = %d\n", err);
+			// fprintf(stdout,  "push_inner: err = %d\n", err);
 #if defined(_WIN32)
 			if (err == WSAEWOULDBLOCK) {
 				err = 0;
@@ -6520,10 +6521,15 @@ push_inner(struct mg_context *ctx,
 #endif
 			if (n < 0) {
 				/* shutdown of the socket at client side */
-				fprintf(stdout, "push_inner:B return -2, since n=%d\n", n);
-				err = 0;
-				n = 0;
-				//return -2;
+				// fprintf(stdout, "push_inner:B return -2, since n=%d\n", n);
+				if (retry_when_zts_send_1 > 0) {
+					err = 0;
+					n = 0;
+					retry_when_zts_send_1 -= 1;
+				} else {
+					fprintf(stdout, "push_inner: B retry_when_zts_send_1 <=0 so download thread exist.\n");
+					return -2;
+				}
 			}
 		}
 
@@ -6534,7 +6540,7 @@ push_inner(struct mg_context *ctx,
 
 		if ((n > 0) || ((n == 0) && (len == 0))) {
 			/* some data has been read, or no data was requested */
-			fprintf(stdout, "push_inner:D return n = %d\n", n );
+			// fprintf(stdout, "push_inner:D return n = %d\n", n );
 			return n;
 		}
 		if (n < 0) {
@@ -6571,7 +6577,7 @@ push_inner(struct mg_context *ctx,
 				return -2;
 			}
 			if (pollres > 0) {
-				fprintf(stdout, "push_inner:F continue since pollres > 0\n");
+				// fprintf(stdout, "push_inner:F continue since pollres > 0\n");
 				continue;
 			}
 		}
@@ -6629,11 +6635,11 @@ push_all(struct mg_context *ctx,
 		} else {
 			nwritten += n;
 			len -= n;
-			fprintf(stdout, "push_all: continue call push_inner() with len = %d\n", len);
+			// fprintf(stdout, "push_all: continue call push_inner() with len = %d\n", len);
 		}
 	}
 
-	fprintf(stdout, "push_all: finished pushing %d bytes\n", nwritten);
+	// fprintf(stdout, "push_all: finished pushing %d bytes\n", nwritten);
 	return nwritten;
 }
 
@@ -7091,7 +7097,11 @@ mg_write(struct mg_connection *conn, const void *buf, size_t len)
 				    != allowed) {
 					break;
 				}
+#if defined(_WIN32)
+                Sleep(1000);
+#else
 				sleep(1);
+#endif
 				conn->last_throttle_bytes = allowed;
 				conn->last_throttle_time = time(NULL);
 				buf = (const char *)buf + n;
@@ -7109,7 +7119,7 @@ mg_write(struct mg_connection *conn, const void *buf, size_t len)
 	if (total > 0) {
 		conn->num_bytes_sent += total;
 	}
-	fprintf(stdout, "mg_write:  write %d bytes\n", total);
+	// fprintf(stdout, "mg_write:  write %d bytes\n", total);
 	return total;
 }
 
@@ -7747,6 +7757,29 @@ substitute_index_file(struct mg_connection *conn,
 }
 #endif
 
+#if defined(_WIN32)
+static char*
+get_target_path_from_lnk(char *link_path)
+{
+    char tmp[PATH_MAX];
+    struct mg_file_stat fstat;
+
+    memset(tmp, 0x00, PATH_MAX);
+    sprintf(tmp, "%s%s", link_path, ".info");
+    mg_stat(NULL, tmp, &fstat);
+
+
+    wchar_t wbuf[W_PATH_MAX];
+    path_to_unicode(NULL, tmp, wbuf, ARRAY_SIZE(wbuf));
+    FILE *file;
+    file = _wfopen(wbuf, L"rb");
+
+    memset(link_path, 0x00, PATH_MAX);
+    int num_read = (int)fread(link_path, 1, (size_t)fstat.size, file);
+    fclose(file);
+    return link_path;
+}
+#endif
 
 static void
 interpret_uri(struct mg_connection *conn, /* in/out: request (must be valid) */
@@ -7826,6 +7859,10 @@ interpret_uri(struct mg_connection *conn, /* in/out: request (must be valid) */
 	truncated = 0;
 	mg_snprintf(
 	    conn, &truncated, filename, filename_buf_len - 1, "%s%s", root, uri);
+#if defined(_WIN32)
+    // get real file path from shortcut file.
+    filename = get_target_path_from_lnk(filename);
+#endif
     fprintf(stdout, "requested file is : %d", filename);
 
 	if (truncated) {
@@ -9326,8 +9363,10 @@ connect_socket(struct mg_context *ctx /* may be NULL */,
     in4->sin_family = ZTS_AF_INET;
     ip_ver = 4;
 #else
-    if (mg_inet_pton(AF_INET, host, &sa->sin, sizeof(sa->sin), 1)) {
+    if (mg_inet_pton(ZTS_AF_INET, host, &sa->sin, sizeof(sa->sin), 1)) {
         sa->sin.sin_port = zts_htons((uint16_t)port);
+        sa->sin.sin_addr.s_addr = zts_inet_addr(host);
+        sa->sin.sin_family = ZTS_AF_INET;
         ip_ver = 4;
 #if defined(USE_IPV6)
     } else if (mg_inet_pton(AF_INET6, host, &sa->sin6, sizeof(sa->sin6), 1)) {
@@ -10049,6 +10088,7 @@ send_file_data(struct mg_connection *conn,
 			    "%s",
 			    "Error: Unable to access file at requested position.");
 		} else {
+			fprintf(stdout, "send_file_data: offset = %lld\n", offset);
 			while (len > 0) 
 			{
 				/* Calculate how much to read from the file in the buffer */
@@ -10059,7 +10099,7 @@ send_file_data(struct mg_connection *conn,
 
 				/* Read from file, exit the loop on error */
 				num_read = (int)fread(buf, 1, (size_t)to_read, filep->access.fp);
-				fprintf(stdout, "\n\nsend_file_data:fread %d bytes with to_read = %lld\n", num_read, to_read);
+				// fprintf(stdout, "\n\nsend_file_data:fread %d bytes with to_read = %lld\n", num_read, to_read);
 				if ( num_read <= 0) {
 					fprintf(stdout, "send_file_data:num_read %d <= 0, break\n", num_read);
 					break;
@@ -10074,7 +10114,7 @@ send_file_data(struct mg_connection *conn,
 
 				/* Both read and were successful, adjust counters */
 				len -= num_written;
-                fprintf(stdout, "send_file_data:len - num_written = %lld\n", len);
+                // fprintf(stdout, "send_file_data:len - num_written = %lld\n", len);
 			}
 		}
 	}
@@ -13480,7 +13520,7 @@ set_throttle(const char *spec, const union usa *rsa, const char *uri)
 
 	while ((spec = next_option(spec, &vec, &val)) != NULL) {
 		mult = ',';
-		if ((val.ptr == NULL) || (sscanf(val.ptr, "%lf%c", &v, &mult) < 1)
+        if ((vec.ptr == NULL) || (sscanf(vec.ptr, "%lf%c", &v, &mult) < 1)
 		    || (v < 0)
 		    || ((lowercase(&mult) != 'k') && (lowercase(&mult) != 'm')
 		        && (mult != ','))) {
@@ -13489,7 +13529,9 @@ set_throttle(const char *spec, const union usa *rsa, const char *uri)
 		v *= (lowercase(&mult) == 'k')
 		         ? 1024
 		         : ((lowercase(&mult) == 'm') ? 1048576 : 1);
-		if (vec.len == 1 && vec.ptr[0] == '*') {
+        throttle = (int)v;
+        break;
+        if (vec.len == 1 && vec.ptr[0] == '*') {
 			throttle = (int)v;
 		} else {
 			int matched = parse_match_net(&vec, rsa, 0);
@@ -14277,7 +14319,8 @@ handle_request(struct mg_connection *conn)
 	DEBUG_TRACE("URL: %s", ri->local_uri);
 
 	/* 2. if this ip has limited speed, set it for this connection */
-	conn->throttle = set_throttle(conn->dom_ctx->config[THROTTLE],
+    const char * spec = conn->dom_ctx->config[THROTTLE];
+    conn->throttle = set_throttle(spec,
 	                              &conn->client.rsa,
 	                              ri->local_uri);
 
@@ -19983,7 +20026,7 @@ mg_start(const struct mg_callbacks *callbacks,
 	init.user_data = user_data;
 	init.configuration_options = options;
 
-	return mg_start2(&init, NULL);
+    return mg_start2(&init, NULL);
 }
 
 

@@ -21,15 +21,17 @@ public:
     void init_table();
     void mklink(QString target, QString link);
     void start_download_status_timer();
+    void On_http_server_finished();
 
 public slots:
-    void rightMessage();
     void MyTimerSlot();
+    void start_webserver_status_timer();
 
 private:
     Ui::Page_shared *ui;
     QProcess  *p_http_server;
     bool  b_start_webserver_auto;
+    bool  b_destroy;
 
     QTimer * m_Timer;
 
@@ -39,6 +41,7 @@ private slots:
     void on_shared_file_tableWidget_itemClicked(QTableWidgetItem *item);
     void on_bt_add_share_file_clicked();
     void on_bt_share_file_clicked();
+    void on_bt_delete_share_clicked();
 };
 
 #endif // PAGE_SHARED_H

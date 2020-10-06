@@ -6,6 +6,8 @@
 #include <QDebug>
 #include <QJsonObject>
 #include <QJsonDocument>
+#include <QMessageBox>
+
 #include "sharing_dialog.h"
 #include "encrypt/simple_encrypt.h"
 #include "mytool.h"
@@ -22,37 +24,37 @@ Page_shared::Page_shared(QWidget *parent) :
     ui->setupUi(this);
     ui->bt_delete_share->setVisible(false);
     ui->bt_share_file->setVisible(false);
-    this->m_Timer = NULL;
 
     b_start_webserver_auto = true;
+    b_destroy = false;
+    this->m_Timer = NULL;
 
     this->init_table();
 
     this->p_http_server = new QProcess(this);
 
     if (b_start_webserver_auto) {
-        QString exe_path;
-    #if defined(_WIN32)
-         exe_path = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\webtool\\oxfold-webtool.exe";
-         QStringList args = {"-document_root",
-                             QDir::toNativeSeparators((QDir::homePath()) + "\\oxfold\\bigfiletool\\shared").toStdString().c_str()
-                            };
-    #else
-        exe_path = QDir::homePath() + "/oxfold/webtool/oxfold-webtool";
-        QStringList args = {"-document_root",
-                            (QDir::homePath() + "/oxfold/bigfiletool/shared").toStdString().c_str(),
-                           };
-    #endif
+        QString exe_path = MyTool::getOxfoldWebTool();
+        QStringList args = {
+             "-document_root",
+             MyTool::getSharedDir(),
+            "-throttle",
+            "1m"
+        };
 
-        p_http_server->setProgram(exe_path);
-        p_http_server->setArguments(args);
-        connect(p_http_server, SIGNAL(readyReadStandardOutput()), this, SLOT(rightMessage()) );
-        p_http_server->start();
-        start_download_status_timer();
+        p_http_server->start(exe_path, args);
+
+        connect(p_http_server, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+            [=](int exitCode, QProcess::ExitStatus exitStatus)
+        {
+            On_http_server_finished();
+        });
+
+        start_webserver_status_timer();
     }
 }
 
-void Page_shared::start_download_status_timer()
+void Page_shared::start_webserver_status_timer()
 {
     if (m_Timer == NULL) {
         m_Timer = new QTimer(this);
@@ -63,27 +65,51 @@ void Page_shared::start_download_status_timer()
 
 void Page_shared::MyTimerSlot()
 {
-    // check status of p_http_server, and restart it if stopped.
-    if (p_http_server->state() == QProcess::NotRunning) {
+    double cpu_usage = 0.0;
+    qint64 pid = p_http_server->processId();
+#if defined(_WIN32)
+    HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
+    if (hProcess == NULL)
+        return;
+    BOOL bSuccess = MyTool::GetCPUUserRateEx(hProcess, cpu_usage);
+    CloseHandle(hProcess);
+#else
+    QProcess check_webserver_cpu;
+    QStringList args = {
+        "u", QString::number(pid)
+    };
+    check_webserver_cpu.start("ps",  args);
+    check_webserver_cpu.waitForFinished();
+    QString output(check_webserver_cpu.readAllStandardOutput());
+    QStringList list=output.split("\n");
+    list = list[1].simplified().split(" ");
+    cpu_usage = list[2].toFloat();
+#endif
+    if (cpu_usage >= 90.0) {
+        p_http_server->kill();
+    }
+}
+
+void Page_shared::On_http_server_finished()
+{
+    if (b_destroy) return;
+
+    if (p_http_server->state() != QProcess::Running) {
         p_http_server->start();
     }
 }
 
-void Page_shared::rightMessage()
-{
-    QByteArray strdata = p_http_server->readAllStandardOutput();
-    MyTool::http_server_ip =  QString(strdata);
-}
 
 Page_shared::~Page_shared()
 {
+    b_destroy = true;
     delete ui;
     p_http_server->kill();
 }
 
 void Page_shared::init_table()
 {
-    QStringList header_title = { " ","文件名", "大小", "修改时间", "" };
+    //QStringList header_title = { " ","文件名", "大小", "修改时间", "" };
     QTableWidget * t = ui->shared_file_tableWidget;
 
     t->verticalHeader()->setVisible(false);
@@ -95,8 +121,14 @@ void Page_shared::init_table()
 
     // init data
     int n_cols = 4;
-    QDir dir1(QDir::homePath() + "/oxfold/bigfiletool/shared");
+    QDir dir1(MyTool::getSharedDir());
+#if defined(_WIN32)
+    QStringList filters;
+    filters << "*.lnk";
+    QFileInfoList list = dir1.entryInfoList(filters);
+#else
     QFileInfoList list = dir1.entryInfoList();
+#endif
     for (int i = 0; i < list.size(); ++i)
     {
         QFileInfo fileInfo = list.at(i);
@@ -107,7 +139,7 @@ void Page_shared::init_table()
 
         for (int col=0; col!=n_cols; ++col)
         {
-            QTableWidgetItem * const i = new QTableWidgetItem;
+            QTableWidgetItem * const i = new QTableWidgetItem();
             i->setFlags(i->flags() & ~Qt::ItemIsEditable);
             if (col == 0 ) {
                 //Checkbox
@@ -118,7 +150,11 @@ void Page_shared::init_table()
                 i->setCheckState(Qt::Unchecked);
             }
             if (col == 1 ) {
+#if defined(_WIN32)
+                i->setText(fileInfo.fileName().replace(".lnk", ""));
+#else
                 i->setText(fileInfo.fileName());
+#endif
             }
             if (col == 2 ) {
                 i->setText( MyTool::converFileSizeToKBMBGB(fileInfo.size()));
@@ -156,41 +192,61 @@ void Page_shared::resizeEvent(QResizeEvent *e)
 void Page_shared::on_shared_file_tableWidget_itemClicked(QTableWidgetItem *item)
 {
     QTableWidget * t = ui->shared_file_tableWidget;
+    int clicked_row = item->row();
+    int pre_row = -1;
     const int n_rows = t->rowCount();
+    QItemSelectionModel *select = t->selectionModel();
+    QModelIndexList  rows;
+
+    // get previously selected row
     for (int row=0; row!=n_rows; ++row)
     {
         QTableWidgetItem *  i = t->item(row, 0);
-        i->setCheckState(Qt::Unchecked);
+        Qt::CheckState s = i->checkState();
+        if (s == Qt::Checked) {
+            pre_row = row;
+            break;
+        }
     }
 
-    int row = item->row();
-    QTableWidgetItem *  i = t->item(row, 0);
-    Qt::CheckState s = i->checkState();
-    if (s == Qt::Unchecked) {
-        i->setCheckState(Qt::Checked);
-        ui->bt_delete_share->setVisible(true);
-        ui->bt_share_file->setVisible(true);
-    }else {
-        i->setCheckState(Qt::Unchecked);
-        ui->bt_delete_share->setVisible(false);
-        ui->bt_share_file->setVisible(false);
+    if (select->hasSelection())  // select row before
+    {
+        if (pre_row == clicked_row) {  //de-select this row
+            QTableWidgetItem *  i = t->item(clicked_row, 0);
+            Qt::CheckState s = i->checkState();
+            if (s == Qt::Unchecked) {
+                i->setCheckState(Qt::Checked);
+                ui->bt_delete_share->setVisible(true);
+                ui->bt_share_file->setVisible(true);
+            } else {
+                i->setCheckState(Qt::Unchecked);
+                t->selectionModel()->clearSelection();
+                ui->bt_delete_share->setVisible(false);
+                ui->bt_share_file->setVisible(false);
+            }
+        } else {  // select a new row
+            // otherwise highlight the clicked row.
+            if (pre_row != -1) {
+                 QTableWidgetItem *  j = t->item(pre_row, 0);
+                 j->setCheckState(Qt::Unchecked);
+            }
+            QTableWidgetItem *  i = t->item(clicked_row, 0);
+            i->setCheckState(Qt::Checked);
+            ui->bt_delete_share->setVisible(true);
+            ui->bt_share_file->setVisible(true);
+        }
     }
-
 }
 
 void Page_shared::mklink(QString target, QString link)
 {
 #if defined (_WIN32)
-    QString _target = QDir::toNativeSeparators(target);
-    QString _link   = QDir::toNativeSeparators(link);
-    BOOL fCreatedLink = CreateHardLinkA( _link.toStdString().c_str(),
-                                        _target.toStdString().c_str(),
-                                        NULL ); // reserved, must be NULL
+    QFile::link(target, link + ".lnk");
 
-    if ( fCreatedLink == FALSE )
-    {
-        qDebug("create hadr link failed in windows : %s", _target.toStdString().c_str());
-    }
+    QFile down_file(link + ".info");
+    down_file.open(QIODevice::WriteOnly);
+    down_file.write(target.toStdString().c_str());
+    down_file.close();
 #else
     QFile::link(target, link);
 #endif
@@ -210,7 +266,7 @@ void Page_shared::on_bt_add_share_file_clicked()
         QDateTime   lastmodified = info.lastModified();
 
         //create symlink at ~/oxfold/bigfiletool/shared
-        mklink(afp, QDir::homePath() + "/oxfold/bigfiletool/shared/" + name);
+        mklink(afp, MyTool::getSharedDir() + name);
 
         //add item to tableWidget
         QTableWidget * t = ui->shared_file_tableWidget;
@@ -218,7 +274,7 @@ void Page_shared::on_bt_add_share_file_clicked()
         int n_cols = 4;
         for (int col=0; col!=n_cols; ++col)
         {
-            QTableWidgetItem * const i = new QTableWidgetItem;
+            QTableWidgetItem * const i = new QTableWidgetItem();
             i->setFlags(i->flags() & ~Qt::ItemIsEditable);
             if (col == 0 ) {
                 //Checkbox
@@ -247,9 +303,9 @@ void Page_shared::on_bt_add_share_file_clicked()
 qint64 getFileSize(QString shared_file_name)
 {
 #if defined (_WIN32)
-    QString file_path = QDir::toNativeSeparators(QDir::homePath()) + "\\oxfold\\bigfiletool\\shared\\" +  shared_file_name;
+    QString file_path = MyTool::getSharedDir()  +  shared_file_name + ".lnk";
 #else
-    QString file_path = QDir::homePath() + "/oxfold/bigfiletool/shared/" +  shared_file_name;
+    QString file_path = MyTool::getSharedDir()  +  shared_file_name;
 #endif
     QFileInfo info(file_path);
     return info.size();
@@ -278,11 +334,14 @@ QString my_randString(int len)
 // sharing link looks like http://ip:8080/filename.ext
 void Page_shared::on_bt_share_file_clicked()
 {
-#if defined (ENABLE_OXFOLD)
-    QString host_ip = MyTool::http_server_ip;
-#else
     QString host_ip = MyTool::getNodeIPV4();
-#endif
+    if (host_ip == "0.0.0.0") {
+        QMessageBox msgBox;
+        msgBox.setText("请稍候，等内置的web服务启动后再点击分享。");
+        msgBox.exec();
+        return;
+    }
+
     int     port = 8080;
     QString file_name;
     qint64  file_size;
@@ -323,4 +382,42 @@ void Page_shared::on_bt_share_file_clicked()
     sharing_Dialog dlg(this);
     dlg.init_data(link, pass_word);
     dlg.exec();
+}
+
+void Page_shared::on_bt_delete_share_clicked()
+{
+    QTableWidget * t = ui->shared_file_tableWidget;
+    QItemSelectionModel *select = t->selectionModel();
+    QModelIndexList  rows;
+    QTableWidgetItem *item;
+
+    if (select->hasSelection())
+    {
+        rows = select->selectedRows();
+        int row = rows.at(0).row();
+        item = t->item(row, 1);
+        QString fname = item->text();
+
+        QMessageBox msgBox;
+        msgBox.setText("确定不再共享这个文件吗？");
+        //msgBox.setInformativeText("Do you want to save your changes?");
+        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::Cancel);
+        msgBox.setDefaultButton(QMessageBox::Cancel);
+       int ret = msgBox.exec();
+
+       if (ret == QMessageBox::Yes) {
+            //delete file in shared directory
+#if defined(_WIN32)
+            QFile::remove(MyTool::getSharedDir() + fname + ".lnk");
+            QFile::remove(MyTool::getSharedDir() + fname + ".info");
+#else
+            QFile::remove(MyTool::getSharedDir() + fname);
+#endif
+            t->removeRow(row);
+       }
+    } else {
+        QMessageBox msgBox;
+        msgBox.setText("请先选择一个下载任务!");
+        msgBox.exec();
+    }
 }

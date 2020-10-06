@@ -76,3 +76,9 @@ win32 {
     LIBS += -L$$PWD/../../../oxfold/lib/win-x86/ -lzt-shared
     DEPENDPATH += $$PWD/../../../oxfold/lib/win-x86
 }
+
+unix:!macx {
+    QMAKE_RPATHDIR = ./
+    LIBS += -L$$PWD/../../../oxfold/lib/linux-x86_64/ -lzt
+    DEPENDPATH += $$PWD/../../../oxfold/lib/linux-x86_64
+}

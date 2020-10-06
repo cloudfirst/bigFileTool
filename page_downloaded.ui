@@ -6,25 +6,138 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>300</height>
+    <width>737</width>
+    <height>512</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
+  <widget class="QPushButton" name="bt_show_directory">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>10</y>
+     <width>101</width>
+     <height>32</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Microsoft YaHei</family>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>查看所在位置</string>
+   </property>
+  </widget>
   <widget class="QLabel" name="label">
    <property name="geometry">
     <rect>
-     <x>110</x>
-     <y>120</y>
-     <width>191</width>
-     <height>111</height>
+     <x>0</x>
+     <y>50</y>
+     <width>511</width>
+     <height>21</height>
     </rect>
    </property>
-   <property name="text">
-    <string>page downloaded </string>
+   <property name="font">
+    <font>
+     <family>Microsoft YaHei</family>
+     <pointsize>10</pointsize>
+    </font>
    </property>
+   <property name="styleSheet">
+    <string notr="true">background-color:white</string>
+   </property>
+   <property name="text">
+    <string>传输完成</string>
+   </property>
+  </widget>
+  <widget class="QTableWidget" name="tableWidget">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>71</y>
+     <width>711</width>
+     <height>431</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">background-color:white</string>
+   </property>
+   <column>
+    <property name="text">
+     <string>选择</string>
+    </property>
+    <property name="font">
+     <font>
+      <family>Microsoft YaHei</family>
+      <pointsize>9</pointsize>
+     </font>
+    </property>
+    <property name="background">
+     <color>
+      <red>218</red>
+      <green>218</green>
+      <blue>218</blue>
+     </color>
+    </property>
+   </column>
+   <column>
+    <property name="text">
+     <string>文件名</string>
+    </property>
+    <property name="font">
+     <font>
+      <family>Microsoft YaHei</family>
+      <pointsize>9</pointsize>
+     </font>
+    </property>
+    <property name="background">
+     <color>
+      <red>218</red>
+      <green>218</green>
+      <blue>218</blue>
+     </color>
+    </property>
+   </column>
+   <column>
+    <property name="text">
+     <string>大小</string>
+    </property>
+    <property name="font">
+     <font>
+      <family>Microsoft YaHei</family>
+      <pointsize>9</pointsize>
+     </font>
+    </property>
+    <property name="background">
+     <color>
+      <red>218</red>
+      <green>218</green>
+      <blue>218</blue>
+     </color>
+    </property>
+   </column>
+   <column>
+    <property name="text">
+     <string>状态</string>
+    </property>
+    <property name="font">
+     <font>
+      <family>Microsoft YaHei</family>
+      <pointsize>9</pointsize>
+     </font>
+    </property>
+    <property name="background">
+     <color>
+      <red>218</red>
+      <green>218</green>
+      <blue>218</blue>
+     </color>
+    </property>
+   </column>
   </widget>
  </widget>
  <resources/>

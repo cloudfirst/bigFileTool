@@ -268,7 +268,7 @@ show_server_name(void)
 	(void)MakeConsole();
 #endif
 
-	fprintf(stderr, "CivetWeb v%s, built on %s\n", mg_version(), __DATE__);
+    fprintf(stderr, "oxfold-webtool v%s, built on %s\n", mg_version(), __DATE__);
 }
 
 
@@ -279,7 +279,7 @@ show_usage_and_exit(const char *exeName)
 	int i;
 
 	if (exeName == 0 || *exeName == 0) {
-		exeName = "civetweb";
+        exeName = "oxfold-webtool";
 	}
 
 	show_server_name();
@@ -928,7 +928,7 @@ init_server_name(void)
 	DEBUG_ASSERT((strlen(mg_version()) + 12) < sizeof(g_server_base_name));
 	snprintf(g_server_base_name,
 	         sizeof(g_server_base_name),
-	         "CivetWeb V%s",
+	         "Oxfold-WebTool V%s",
 	         mg_version());
 	g_server_name = g_server_base_name;
 	g_icon_name = NULL;
@@ -1002,7 +1002,7 @@ verify_existence(char **options, const char *option_name, int must_be_dir)
 	    && (stat(path, &st) != 0
 	        || ((S_ISDIR(st.st_mode) ? 1 : 0) != must_be_dir))) {
 		die("Invalid path for %s: [%s]: (%s). Make sure that path is either "
-		    "absolute, or it is relative to civetweb executable.",
+		    "absolute, or it is relative to oxfold-webtool executable.",
 		    option_name,
 		    path,
 		    strerror(errno));
@@ -1198,14 +1198,23 @@ run_client(const char *url_arg, const char *dst_file_arg)
 
 		fprintf(stdout, "Connected to %s\n", host);
 
+		/* prepare range header */
+		struct stat st;
+		uint64_t  offset = 0;
+		if (0 == stat(dst_file_arg, &st)) 
+		{
+			offset = (uint64_t)st.st_size;
+		}
 		/* Send GET request */
 		mg_printf(conn,
 		          "GET /%s HTTP/1.1\r\n"
 		          "Host: %s\r\n"
 		          "Connection: close\r\n"
+                  "Range: bytes=%lld-\r\n"
 		          "\r\n",
 		          resource,
-		          host);
+		          host,
+                  offset);
 
 		/* Wait for server to respond with a HTTP header */
 		ret = mg_get_response(conn, ebuf, sizeof(ebuf), 10000);
@@ -1215,6 +1224,11 @@ run_client(const char *url_arg, const char *dst_file_arg)
 		if (ret >= 0) {
 			const struct mg_response_info *ri = mg_get_response_info(conn);
             FILE *f = fopen(dst_file_arg, "ab");
+#if defined(_WIN32)
+            _fseeki64(f, offset, SEEK_SET);
+#else
+            fseeko(f, offset, SEEK_SET);
+#endif
 			fprintf(stdout,
 			        "Response info: %i %s\n",
 			        ri->status_code,
@@ -1223,7 +1237,7 @@ run_client(const char *url_arg, const char *dst_file_arg)
 			/* Respond reader read. Read body (if any) */
 			ret = mg_read(conn, buf, sizeof(buf));
 			while (ret > 0) {
-				fprintf(stdout, "================== read %d bytes ==================\n", ret);
+				// fprintf(stdout, "================== read %d bytes ==================\n", ret);
                 //fwrite(buf, 1, (unsigned)ret, stdout);
                 fwrite(buf, 1, (unsigned)ret, f);
 				ret = mg_read(conn, buf, sizeof(buf));

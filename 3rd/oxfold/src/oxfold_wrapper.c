@@ -1,6 +1,8 @@
 #include "../../../oxfold/include/oxfold_wrapper.h"
 #include "../../../oxfold/include/ZeroTierSockets.h"
 
+bool isServer = false;
+
 struct Node
 {
     bool online;
@@ -13,10 +15,44 @@ struct Node
     char ipV6[100];
 } myNode;
 
+char* add_char_array(char* str1, char*str2)
+{
+    char * str3 = (char *) malloc(1 + strlen(str1)+ strlen(str2) );
+    strcpy(str3, str1);
+    strcat(str3, str2);
+    return str3;
+}
+
+char* getHomePath()
+{
+#if defined(_WIN32)
+    char *home_drive;
+    char *home_path;
+    int ret;
+    home_drive = getenv("HOMEDRIVE");
+    home_path  = getenv("HOMEPATH");
+    char *home = add_char_array(home_drive, home_path);
+    return add_char_array(home, "\\AppData\\oxfold\\webtool\\myrouter");
+#else
+    return "/usr/local/bigfiletool/myrouter/";
+#endif
+}
 
 void assign_ipv4(char* ipv4){
+    char *home, *ipfile;
     memset(myNode.ipV4, 0x00, 50);
     strncpy(myNode.ipV4, ipv4, strlen(ipv4));
+    if (isServer) { // save IP to file
+        home = getHomePath();
+#if defined(_WIN32)
+        ipfile = add_char_array(home, "\\webserver.txt");
+#else
+        ipfile = add_char_array(home, "/webserver.txt");
+#endif
+        FILE *f = fopen(ipfile, "w");
+        fwrite(ipv4, 1, strlen(ipv4), f);
+        fclose(f);
+    }
 }
 
 void assign_ipv6(char* ipv6){
@@ -132,31 +168,6 @@ void myZeroTierEventCallback(void *msgPtr)
     }
 }
 
-char* add_char_array(char* str1, char*str2)
-{
-    char * str3 = (char *) malloc(1 + strlen(str1)+ strlen(str2) );
-    strcpy(str3, str1);
-    strcat(str3, str2);
-    return str3;
-}
-
-char* getHomePath()
-{
-#if defined(_WIN32)
-    char *home_drive;
-    char *home_path;
-    int ret;
-    home_drive = getenv("HOMEDRIVE");
-    home_path  = getenv("HOMEPATH");
-    char *home = add_char_array(home_drive, home_path);
-    return add_char_array(home, "\\oxfold\\bigfiletool\\myrouter");
-#else
-    char * value;
-    value = getenv ("HOME");
-    return add_char_array(value, "/oxfold/bigfiletool/myrouter");
-#endif
-}
-
 int start_oxfold(char* home_path)
 {
     memset(&myNode, 0, sizeof(myNode));
@@ -167,10 +178,12 @@ int start_oxfold(char* home_path)
     zts_allow_network_caching(false);
     char* home;
 
-    if (home_path == NULL) {
+    if (home_path == NULL) {  // run for server
         home = getHomePath();
-    } else {
+        isServer = true;
+    } else {                  // run for client
         home = home_path;
+        isServer = false;
     }
 
     if((err = zts_start(home, &myZeroTierEventCallback, ztServicePort)) != ZTS_ERR_OK) {
